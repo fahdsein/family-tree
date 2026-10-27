@@ -4,7 +4,7 @@ import { extname, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readFile } from "node:fs/promises";
 import { FamilyStore } from "./lib/store.mjs";
-import { addAudit, createParentLink, createPerson, createUnion, describeRelationship, LIFE_STATUSES, PARENT_TYPES, UNION_STATUSES, UNION_TYPES, clean } from "./lib/domain.mjs";
+import { addAudit, createParentLink, createPerson, createUnion, describeRelationship, GENDERS, LIFE_STATUSES, PARENT_TYPES, UNION_STATUSES, UNION_TYPES, clean } from "./lib/domain.mjs";
 
 const port = Number(process.env.PORT || 3000);
 const production = process.env.NODE_ENV === "production";
@@ -69,7 +69,7 @@ function headers(extra = {}) {
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-    "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; font-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    "Content-Security-Policy": "default-src 'self'; img-src 'self' data: blob: https:; font-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
     ...extra
   };
 }
@@ -113,7 +113,7 @@ async function api(request, response, url) {
     return send(response, 200, {
       currentUser: actor ? { email: actor.email, name: actor.name, role: actor.role } : null,
       state: publicSnapshot(actor),
-      options: { lifeStatuses: LIFE_STATUSES, unionStatuses: UNION_STATUSES, unionTypes: UNION_TYPES, parentTypes: PARENT_TYPES },
+      options: { genders: GENDERS, lifeStatuses: LIFE_STATUSES, unionStatuses: UNION_STATUSES, unionTypes: UNION_TYPES, parentTypes: PARENT_TYPES },
       developmentLoginHint: production ? null : { admin: "admin@roots.local / admin-demo", editor: "editor@roots.local / editor-demo" }
     });
   }
@@ -136,11 +136,18 @@ async function api(request, response, url) {
     return send(response, 201, { person: created });
   }
   const personMatch = url.pathname.match(/^\/api\/people\/([^/]+)$/);
+  if (personMatch && request.method === "GET") {
+    requireRole(request, "viewer"); const id = decodeURIComponent(personMatch[1]);
+    const person = store.snapshot().people.find((item) => item.id === id && !item.archivedAt);
+    if (!person) return send(response, 404, { error: "Person not found" });
+    return send(response, 200, { person });
+  }
   if (personMatch && request.method === "PATCH") {
     const actor = requireRole(request, "editor"); const input = await jsonBody(request); const id = decodeURIComponent(personMatch[1]);
     const updated = await store.mutate((state) => {
       const index = state.people.findIndex((p) => p.id === id && !p.archivedAt); if (index < 0) throw Object.assign(new Error("Person not found"), { status: 404 });
-      const next = createPerson({ ...state.people[index], ...input, id, createdAt: state.people[index].createdAt }); state.people[index] = next;
+      const current = state.people[index];
+      const next = createPerson({ ...current, ...input, birth: { ...current.birth, ...(input.birth || {}) }, death: { ...current.death, ...(input.death || {}) }, photo: { ...current.photo, ...(input.photo || {}) }, id, createdAt: current.createdAt }); state.people[index] = next;
       addAudit(state, actor, "update", "person", id, `Updated ${next.displayName}`); return next;
     });
     return send(response, 200, { person: updated });
@@ -149,9 +156,11 @@ async function api(request, response, url) {
     const actor = requireRole(request, "admin"); const id = decodeURIComponent(personMatch[1]);
     await store.mutate((state) => {
       const person = state.people.find((p) => p.id === id && !p.archivedAt); if (!person) throw Object.assign(new Error("Person not found"), { status: 404 });
-      person.archivedAt = new Date().toISOString(); addAudit(state, actor, "archive", "person", id, `Archived ${person.displayName}`);
+      state.people = state.people.filter((item) => item.id !== id); state.unions = state.unions.filter((item) => !item.partnerIds.includes(id)); state.parentLinks = state.parentLinks.filter((item) => item.parentId !== id && item.childId !== id);
+      state.stories = state.stories.map((story) => ({ ...story, personIds: (story.personIds || []).filter((personId) => personId !== id) }));
+      addAudit(state, actor, "delete", "person", id, `Permanently deleted ${person.displayName} and connected relationship records`);
     });
-    return send(response, 200, { archived: true });
+    return send(response, 200, { deleted: true });
   }
   if (request.method === "POST" && url.pathname === "/api/unions") {
     const actor = requireRole(request, "editor"); const input = await jsonBody(request);
@@ -163,9 +172,9 @@ async function api(request, response, url) {
     const actor = requireRole(request, "admin"); const id = decodeURIComponent(unionMatch[1]);
     await store.mutate((state) => {
       const union = state.unions.find((item) => item.id === id && !item.archivedAt); if (!union) throw Object.assign(new Error("Union not found"), { status: 404 });
-      union.archivedAt = new Date().toISOString(); addAudit(state, actor, "archive", "union", id, `Archived ${union.type}`);
+      state.unions = state.unions.filter((item) => item.id !== id); state.parentLinks.forEach((link) => { if (link.unionId === id) link.unionId = null; }); addAudit(state, actor, "delete", "union", id, `Deleted ${union.type}`);
     });
-    return send(response, 200, { archived: true });
+    return send(response, 200, { deleted: true });
   }
   if (request.method === "POST" && url.pathname === "/api/parent-links") {
     const actor = requireRole(request, "editor"); const input = await jsonBody(request);
@@ -177,14 +186,18 @@ async function api(request, response, url) {
     const actor = requireRole(request, "admin"); const id = decodeURIComponent(linkMatch[1]);
     await store.mutate((state) => {
       const link = state.parentLinks.find((item) => item.id === id && !item.archivedAt); if (!link) throw Object.assign(new Error("Parent link not found"), { status: 404 });
-      link.archivedAt = new Date().toISOString(); addAudit(state, actor, "archive", "parent_link", id, "Archived parent-child relationship");
+      state.parentLinks = state.parentLinks.filter((item) => item.id !== id); addAudit(state, actor, "delete", "parent_link", id, "Deleted parent-child relationship");
     });
-    return send(response, 200, { archived: true });
+    return send(response, 200, { deleted: true });
   }
   return send(response, 404, { error: "API route not found" });
 }
 
 async function staticFile(response, pathname) {
+  if (pathname === "/vendor/jspdf.umd.min.js") {
+    const content = await readFile(new URL("./node_modules/jspdf/dist/jspdf.umd.min.js", import.meta.url));
+    response.writeHead(200, headers({ "Content-Type": mime[".js"], "Cache-Control": "public, max-age=31536000, immutable" })); response.end(content); return;
+  }
   if (fontAssets.has(pathname)) {
     const content = await readFile(fontAssets.get(pathname));
     response.writeHead(200, headers({ "Content-Type": mime[".woff2"], "Cache-Control": "public, max-age=31536000, immutable" }));

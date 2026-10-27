@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Roots & Leaves — a private, collaborative family archive.">
   <title>Roots & Leaves</title>
-  <link rel="stylesheet" href="/styles.css?v=4">
-  <script type="module" src="/app.js?v=4"></script>
+  <link rel="stylesheet" href="/styles.css?v=5">
+  <script src="/vendor/jspdf.umd.min.js"></script>
+  <script type="module" src="/app.js?v=5"></script>
 </head>
 <body>
   <header class="topbar">
@@ -16,6 +17,7 @@
     </a>
     <nav aria-label="Primary navigation">
       <button class="nav-button active" data-view="tree">Tree</button>
+      <button class="nav-button" data-view="graph">Graph</button>
       <button class="nav-button" data-view="explore">Relationship explorer</button>
       <button class="nav-button" data-view="history">Stories</button>
       <button class="nav-button admin-only" data-view="admin">Manage</button>
@@ -41,6 +43,12 @@
       <div id="treeCanvas" class="tree-canvas card" aria-live="polite"></div>
     </section>
 
+    <section id="view-graph" class="view">
+      <div class="section-heading graph-heading"><div><p class="eyebrow">Seven-generation map</p><h2>Family relationship graph</h2><p>View documented parent-child and partnership connections, then export the current graph as PNG or PDF.</p></div><div class="graph-actions"><label>Generations<select id="generationDepth"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option selected>7</option></select></label><button id="exportPng" class="button secondary">Download PNG</button><button id="exportPdf" class="button primary">Download PDF</button></div></div>
+      <div id="graphNotice" class="notice hidden">Sign in to render private family relationships.</div>
+      <div id="familyGraph" class="graph-canvas card" aria-live="polite"></div>
+    </section>
+
     <section id="view-explore" class="view">
       <div class="section-heading"><div><p class="eyebrow">Relationship explorer</p><h2>How are two people connected?</h2><p>Results are calculated from documented parent and partnership records—not generated guesses.</p></div></div>
       <div class="explorer card">
@@ -58,14 +66,20 @@
     </section>
 
     <section id="view-admin" class="view admin-only">
-      <div class="section-heading"><div><p class="eyebrow">Data stewardship</p><h2>Manage people and relationships</h2><p>Editors may add records. Administrators can also archive records and review history.</p></div></div>
+      <div class="section-heading"><div><p class="eyebrow">Data stewardship</p><h2>Manage people and relationships</h2><p>Editors may create and update records. Administrators can permanently delete records and review history.</p></div></div>
       <div class="admin-grid">
         <form id="personForm" class="card form-card">
           <h3>Add a person</h3>
           <label>Display name<input name="displayName" required maxlength="100"></label>
+          <div class="two-column"><label>Gender<select name="gender"></select></label><label>Pronouns<input name="pronouns" maxlength="40"></label></div>
+          <label>Alternate names<input name="alternateNames" maxlength="300" placeholder="Comma-separated names"></label>
           <div class="two-column"><label>Life status<select name="lifeStatus"></select></label><label>Branch<input name="branch" maxlength="60" placeholder="Family branch"></label></div>
           <div class="two-column"><label>Birth date or year<input name="birthValue" maxlength="30" placeholder="1984 or circa 1910"></label><label>Birth place<input name="birthPlace" maxlength="140"></label></div>
-          <div class="two-column"><label>Death date or year<input name="deathValue" maxlength="30"></label><label>Privacy<select name="privacy"><option>private</option><option>family</option><option>public</option></select></label></div>
+          <div class="two-column"><label>Birth precision<select name="birthPrecision"><option>exact</option><option>month</option><option>year</option><option>circa</option><option>before</option><option>after</option><option>range</option><option>unknown</option></select></label><label>Death date or year<input name="deathValue" maxlength="30"></label></div>
+          <div class="two-column"><label>Death place<input name="deathPlace" maxlength="140"></label><label>Privacy<select name="privacy"><option>private</option><option>family</option><option>public</option></select></label></div>
+          <label>Photo URL (optional)<input name="photoUrl" type="url" maxlength="1000" placeholder="Secure HTTPS image address"></label>
+          <label>Photo caption<input name="photoCaption" maxlength="180"></label>
+          <label>Tags<input name="tags" maxlength="500" placeholder="Comma-separated topics"></label>
           <label>Biography<textarea name="bio" rows="4" maxlength="2000"></textarea></label>
           <button class="button primary" type="submit">Add person</button>
         </form>
@@ -99,6 +113,7 @@
   </main>
 
   <dialog id="personDialog" class="dialog"><article><button class="icon-button close-dialog" aria-label="Close">×</button><div id="personDetail"></div></article></dialog>
+  <dialog id="editPersonDialog" class="dialog"><form id="editPersonForm"><button type="button" class="icon-button close-edit" aria-label="Close">×</button><p class="eyebrow">Person record</p><h2>Edit person</h2><input name="id" type="hidden"><label>Display name<input name="displayName" required maxlength="100"></label><div class="two-column"><label>Gender<select name="gender"></select></label><label>Pronouns<input name="pronouns" maxlength="40"></label></div><label>Alternate names<input name="alternateNames" maxlength="300"></label><div class="two-column"><label>Life status<select name="lifeStatus"></select></label><label>Branch<input name="branch" maxlength="60"></label></div><div class="two-column"><label>Birth date or year<input name="birthValue" maxlength="30"></label><label>Birth precision<select name="birthPrecision"><option>exact</option><option>month</option><option>year</option><option>circa</option><option>before</option><option>after</option><option>range</option><option>unknown</option></select></label></div><label>Birth place<input name="birthPlace" maxlength="140"></label><div class="two-column"><label>Death date or year<input name="deathValue" maxlength="30"></label><label>Death precision<select name="deathPrecision"><option>exact</option><option>month</option><option>year</option><option>circa</option><option>before</option><option>after</option><option>range</option><option>unknown</option></select></label></div><label>Death place<input name="deathPlace" maxlength="140"></label><div class="two-column"><label>Privacy<select name="privacy"><option>private</option><option>family</option><option>public</option></select></label><label>Tags<input name="tags" maxlength="500"></label></div><label>Photo URL (optional)<input name="photoUrl" type="url" maxlength="1000"></label><label>Photo caption<input name="photoCaption" maxlength="180"></label><label>Biography<textarea name="bio" rows="5" maxlength="2000"></textarea></label><div class="dialog-actions"><button class="button primary" type="submit">Save all changes</button><button class="button secondary close-edit" type="button">Cancel</button></div></form></dialog>
   <dialog id="loginDialog" class="dialog small"><form id="loginForm"><button type="button" class="icon-button close-login" aria-label="Close">×</button><p class="eyebrow">Private archive</p><h2>Sign in</h2><p id="loginHint" class="muted"></p><label>Email<input name="email" type="email" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><p id="loginError" class="error" role="alert"></p><button class="button primary" type="submit">Sign in</button></form></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>

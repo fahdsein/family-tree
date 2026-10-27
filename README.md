@@ -7,6 +7,9 @@ The original single-file prototype remains at `roots_leaves_family_tree_web_app.
 ## What is included
 
 - Responsive tree, profile, story, and relationship-explorer views
+- Interactive SVG relationship graph with a selectable depth of one to seven generations
+- Client-side PNG and PDF graph export
+- Optional HTTPS profile photo and caption on every person record
 - Fourteen selectable palettes organized into the original and forest collections
 - Self-hosted typography: Lora for names and editorial headings, Inter for readable UI text, and Special Elite for restrained archival labels
 - Separate records for people, unions, and parent-child links
@@ -15,7 +18,9 @@ The original single-file prototype remains at `roots_leaves_family_tree_web_app.
 - Relationship calculation that can report both a marriage and a shared ancestor
 - Life statuses: living, deceased, presumed deceased, or unknown
 - Family/private/public visibility controls
-- Editor and administrator roles; administrators may archive people and relationship records and review the audit log
+- Complete and partial person updates; administrators may permanently delete people and relationship records and review the audit log
+- Named kinship inference for parents, children, siblings, grandparents, aunts/uncles, nieces/nephews, cousins, partners, and common in-law relationships
+- Shortest-path relationship graph between any two connected people
 - PostgreSQL persistence in production, with a JSON-file fallback for local development
 - Docker image, Compose stack, health/readiness endpoints, and NEO App deployment configuration
 
@@ -59,7 +64,7 @@ The original collection contains Heritage Parchment, Evergreen Archive, Nordic C
 
 ## Data model
 
-- `people`: identity, approximate or exact vital dates, life status, biography, branch, tags, and privacy.
+- `people`: identity, gender/pronouns, alternate names, approximate or exact vital dates, life status, biography, optional photo, branch, tags, and privacy.
 - `unions`: exactly two partners, union type, historical status, start/end dates, location, end reason, and evidence.
 - `parentLinks`: one parent and one child, parent type (biological, adoptive, step, foster, guardian, donor, surrogate, or unknown), confidence, evidence, and optional union association.
 
@@ -101,7 +106,7 @@ No worker, queue, cron job, or object-storage component is required for the curr
 - `GET /api/bootstrap` — authorized, privacy-filtered application snapshot
 - `POST /api/auth/login` and `POST /api/auth/logout`
 - `POST /api/relationships/explain`
-- `POST/PATCH/DELETE /api/people`
+- `GET/POST/PATCH/DELETE /api/people`
 - `POST/DELETE /api/unions`
 - `POST/DELETE /api/parent-links`
 

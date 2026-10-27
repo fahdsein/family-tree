@@ -141,7 +141,7 @@ function renderTree() {
     const row = node("div", "generation-row");
     for (const person of members.sort((a, b) => a.displayName.localeCompare(b.displayName))) {
       const card = node("button", "person-card"); card.type = "button";
-      card.append(node("span", `avatar ${person.lifeStatus}`, person.displayName.split(/\s+/).map((word) => word[0]).slice(0, 2).join("")));
+      card.append(photoAvatar(person));
       const detail = node("span", "person-card-copy");
       detail.append(node("strong", "", person.displayName), node("small", "", lifespan(person)), node("small", "branch", person.branch));
       card.append(detail, node("i", `status-dot ${person.lifeStatus}`, ""));
@@ -149,6 +149,93 @@ function renderTree() {
     }
     section.append(row); canvas.append(section);
   }
+}
+
+function photoAvatar(person, large = false) {
+  const avatar = node("span", `avatar ${person.lifeStatus}${large ? " large" : ""}`, person.displayName.split(/\s+/).map((word) => word[0]).slice(0, 2).join(""));
+  if (person.photo?.url) {
+    const image = document.createElement("img"); image.src = person.photo.url; image.alt = person.photo.caption || `Photo of ${person.displayName}`; image.referrerPolicy = "no-referrer";
+    image.addEventListener("error", () => image.remove()); avatar.append(image);
+  }
+  return avatar;
+}
+
+function svgElement(name, attributes = {}) {
+  const item = document.createElementNS("http://www.w3.org/2000/svg", name);
+  for (const [key, value] of Object.entries(attributes)) item.setAttribute(key, value);
+  return item;
+}
+
+function buildFamilyGraph() {
+  const depth = Math.min(7, Math.max(1, Number($("#generationDepth").value || 7)));
+  const levels = generationMap();
+  const people = activePeople().filter((person) => (levels.get(person.id) || 0) < depth);
+  const visible = new Set(people.map((person) => person.id));
+  const groups = new Map();
+  for (const person of people) { const level = levels.get(person.id) || 0; if (!groups.has(level)) groups.set(level, []); groups.get(level).push(person); }
+  const maxColumns = Math.max(1, ...[...groups.values()].map((items) => items.length));
+  const width = Math.max(920, maxColumns * 210 + 100); const height = Math.max(300, groups.size * 165 + 90);
+  const svg = svgElement("svg", { viewBox: `0 0 ${width} ${height}`, width, height, role: "img", "aria-label": `Family tree graph showing ${depth} generations` });
+  const style = getComputedStyle(document.documentElement); const primary = style.getPropertyValue("--primary").trim() || "#124e3f"; const secondary = style.getPropertyValue("--secondary").trim() || "#c5a880"; const text = style.getPropertyValue("--text").trim() || "#13221e"; const background = style.getPropertyValue("--bg").trim() || "#eef3f1";
+  svg.append(svgElement("rect", { width, height, fill: background }));
+  const positions = new Map();
+  for (const [level, members] of [...groups.entries()].sort((a, b) => a[0] - b[0])) {
+    const sorted = members.sort((a, b) => a.displayName.localeCompare(b.displayName)); const rowWidth = sorted.length * 190; const start = (width - rowWidth) / 2;
+    sorted.forEach((person, index) => positions.set(person.id, { x: start + index * 190 + 15, y: 35 + level * 165 }));
+  }
+  const edges = svgElement("g", { fill: "none", "stroke-linecap": "round" });
+  for (const link of activeLinks().filter((item) => visible.has(item.parentId) && visible.has(item.childId))) {
+    const a = positions.get(link.parentId); const b = positions.get(link.childId); if (!a || !b) continue;
+    const middle = (a.y + 94 + b.y) / 2; edges.append(svgElement("path", { d: `M ${a.x + 75} ${a.y + 94} C ${a.x + 75} ${middle}, ${b.x + 75} ${middle}, ${b.x + 75} ${b.y}`, stroke: primary, "stroke-width": 2.2, opacity: .66 }));
+  }
+  for (const union of activeUnions().filter((item) => item.partnerIds.every((id) => visible.has(id)))) {
+    const a = positions.get(union.partnerIds[0]); const b = positions.get(union.partnerIds[1]); if (!a || !b) continue;
+    edges.append(svgElement("line", { x1: a.x + 75, y1: a.y + 47, x2: b.x + 75, y2: b.y + 47, stroke: secondary, "stroke-width": 3, "stroke-dasharray": "7 5" }));
+  }
+  svg.append(edges);
+  for (const person of people) {
+    const position = positions.get(person.id); const group = svgElement("g", { class: "graph-person", tabindex: "0", role: "button", "aria-label": person.displayName });
+    group.append(svgElement("rect", { x: position.x, y: position.y, width: 150, height: 94, rx: 14, fill: "#ffffff", stroke: primary, "stroke-width": 1.5 }));
+    group.append(svgElement("circle", { cx: position.x + 26, cy: position.y + 28, r: 16, fill: primary }));
+    const initials = svgElement("text", { x: position.x + 26, y: position.y + 33, "text-anchor": "middle", fill: "#ffffff", "font-family": "Inter, sans-serif", "font-size": 11, "font-weight": 700 }); initials.textContent = person.displayName.split(/\s+/).map((word) => word[0]).slice(0, 2).join(""); group.append(initials);
+    const name = svgElement("text", { x: position.x + 14, y: position.y + 60, fill: text, "font-family": "Lora, serif", "font-size": 13, "font-weight": 600 }); name.textContent = person.displayName.length > 20 ? `${person.displayName.slice(0, 19)}…` : person.displayName; group.append(name);
+    const years = svgElement("text", { x: position.x + 14, y: position.y + 79, fill: text, opacity: .68, "font-family": "Inter, sans-serif", "font-size": 10 }); years.textContent = lifespan(person); group.append(years);
+    group.addEventListener("click", () => showPerson(person.id)); group.addEventListener("keydown", (event) => { if (["Enter", " "].includes(event.key)) showPerson(person.id); }); svg.append(group);
+  }
+  return svg;
+}
+
+function renderGraph() {
+  const root = $("#familyGraph"); root.replaceChildren(); $("#graphNotice").classList.toggle("hidden", Boolean(model.currentUser));
+  if (!activePeople().length) { root.append(node("p", "empty-state", "No visible people are available for the graph.")); return; }
+  root.append(buildFamilyGraph());
+}
+
+async function graphCanvas() {
+  const svg = $("#familyGraph svg"); if (!svg) throw new Error("No graph is available to export");
+  const clone = svg.cloneNode(true); clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  const source = new XMLSerializer().serializeToString(clone); const url = URL.createObjectURL(new Blob([source], { type: "image/svg+xml;charset=utf-8" }));
+  try {
+    const image = new Image(); await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; image.src = url; });
+    const view = svg.viewBox.baseVal; const scale = 2; const canvas = document.createElement("canvas"); canvas.width = view.width * scale; canvas.height = view.height * scale;
+    const context = canvas.getContext("2d"); context.scale(scale, scale); context.drawImage(image, 0, 0, view.width, view.height); return canvas;
+  } finally { URL.revokeObjectURL(url); }
+}
+
+function downloadData(url, filename) { const anchor = document.createElement("a"); anchor.href = url; anchor.download = filename; document.body.append(anchor); anchor.click(); anchor.remove(); }
+
+async function exportGraph(format) {
+  try {
+    const canvas = await graphCanvas(); const date = new Date().toISOString().slice(0, 10);
+    if (format === "png") { downloadData(canvas.toDataURL("image/png"), `family-tree-${date}.png`); }
+    else {
+      if (!window.jspdf?.jsPDF) throw new Error("PDF generator is unavailable");
+      const { jsPDF } = window.jspdf; const pdf = new jsPDF({ orientation: canvas.width >= canvas.height ? "landscape" : "portrait", unit: "pt", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth(); const pageHeight = pdf.internal.pageSize.getHeight(); const ratio = Math.min((pageWidth - 36) / canvas.width, (pageHeight - 54) / canvas.height);
+      pdf.setFont("helvetica", "bold"); pdf.setFontSize(14); pdf.text(model.state.workspace?.name || "Family Tree", 18, 20); pdf.addImage(canvas.toDataURL("image/jpeg", .92), "JPEG", 18, 30, canvas.width * ratio, canvas.height * ratio); pdf.save(`family-tree-${date}.pdf`);
+    }
+    toast(`${format.toUpperCase()} export generated`);
+  } catch (error) { toast(error.message || "Export failed", true); }
 }
 
 function relationshipSection(title, values) {
@@ -163,7 +250,10 @@ function relationshipSection(title, values) {
 function showPerson(id) {
   const person = personById(id); if (!person) return;
   const root = $("#personDetail"); root.replaceChildren();
-  root.append(node("p", "eyebrow", person.branch), node("h2", "", person.displayName), node("p", "detail-lifespan", `${label(person.lifeStatus)} · ${lifespan(person)}`));
+  const heading = node("div", "profile-heading"); heading.append(photoAvatar(person, true)); const headingCopy = node("div", ""); headingCopy.append(node("p", "eyebrow", person.branch), node("h2", "", person.displayName), node("p", "detail-lifespan", `${label(person.lifeStatus)} · ${lifespan(person)}`)); heading.append(headingCopy); root.append(heading);
+  if (person.photo?.url && person.photo.caption) root.append(node("p", "photo-caption muted", person.photo.caption));
+  const identity = [person.gender && person.gender !== "unknown" ? label(person.gender) : "", person.pronouns, ...(person.alternateNames || [])].filter(Boolean);
+  if (identity.length) root.append(node("p", "muted", identity.join(" · ")));
   if (person.bio) root.append(node("p", "detail-bio", person.bio));
   const unionItems = activeUnions().filter((union) => union.partnerIds.includes(id)).map((union) => {
     const partner = personById(union.partnerIds.find((partnerId) => partnerId !== id));
@@ -180,18 +270,38 @@ function showPerson(id) {
   root.append(relationshipSection("Parents", parentItems), relationshipSection("Children", childItems));
   if (canEdit()) {
     const controls = node("div", "detail-controls");
+    const edit = node("button", "button primary", "Edit complete record"); edit.type = "button"; edit.addEventListener("click", () => openPersonEditor(person.id)); controls.append(edit);
     const status = document.createElement("select"); setOptions(status, model.options.lifeStatuses, person.lifeStatus);
     const save = node("button", "button secondary", "Update life status"); save.type = "button";
     save.addEventListener("click", async () => { try { await request(`/api/people/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ lifeStatus: status.value }) }); $("#personDialog").close(); await reload(); toast("Life status updated"); } catch (error) { toast(error.message, true); } });
     controls.append(status, save);
     if (isAdmin()) {
-      const archive = node("button", "button danger", "Archive person"); archive.type = "button";
-      archive.addEventListener("click", async () => { if (!confirm(`Archive ${person.displayName}? Existing relationship history will remain in the audit log.`)) return; try { await request(`/api/people/${encodeURIComponent(id)}`, { method: "DELETE" }); $("#personDialog").close(); await reload(); toast("Person archived"); } catch (error) { toast(error.message, true); } });
-      controls.append(archive);
+      const remove = node("button", "button danger", "Delete person"); remove.type = "button";
+      remove.addEventListener("click", async () => { if (!confirm(`Permanently delete ${person.displayName}? Their partnerships and parent-child links will also be deleted. This cannot be undone.`)) return; try { await request(`/api/people/${encodeURIComponent(id)}`, { method: "DELETE" }); $("#personDialog").close(); await reload(); toast("Person permanently deleted"); } catch (error) { toast(error.message, true); } });
+      controls.append(remove);
     }
     root.append(controls);
   }
   $("#personDialog").showModal();
+}
+
+function personPayload(values) {
+  const list = (value) => String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
+  return {
+    displayName: values.displayName, alternateNames: list(values.alternateNames), gender: values.gender, pronouns: values.pronouns,
+    lifeStatus: values.lifeStatus, branch: values.branch, privacy: values.privacy, bio: values.bio, tags: list(values.tags),
+    birth: { value: values.birthValue, precision: values.birthPrecision, place: values.birthPlace },
+    death: { value: values.deathValue, precision: values.deathPrecision || "unknown", place: values.deathPlace },
+    photo: { url: values.photoUrl, caption: values.photoCaption }
+  };
+}
+
+function setField(form, name, value) { const field = form.elements.namedItem(name); if (field) field.value = value ?? ""; }
+
+function openPersonEditor(id) {
+  const person = personById(id); if (!person) return; const form = $("#editPersonForm");
+  setField(form, "id", person.id); setField(form, "displayName", person.displayName); setField(form, "alternateNames", (person.alternateNames || []).join(", ")); setField(form, "gender", person.gender || "unknown"); setField(form, "pronouns", person.pronouns); setField(form, "lifeStatus", person.lifeStatus); setField(form, "branch", person.branch); setField(form, "privacy", person.privacy); setField(form, "bio", person.bio); setField(form, "tags", (person.tags || []).join(", ")); setField(form, "birthValue", person.birth?.value); setField(form, "birthPrecision", person.birth?.precision); setField(form, "birthPlace", person.birth?.place); setField(form, "deathValue", person.death?.value); setField(form, "deathPrecision", person.death?.precision); setField(form, "deathPlace", person.death?.place); setField(form, "photoUrl", person.photo?.url); setField(form, "photoCaption", person.photo?.caption);
+  $("#personDialog").close(); $("#editPersonDialog").showModal();
 }
 
 function renderStories() {
@@ -211,6 +321,9 @@ function renderForms() {
   setOptions($("#relationshipFrom"), people, people[0]?.value);
   setOptions($("#relationshipTo"), people, people[1]?.value || people[0]?.value);
   setOptions($("#personForm [name=lifeStatus]"), model.options.lifeStatuses, "living");
+  setOptions($("#personForm [name=gender]"), model.options.genders, "unknown");
+  setOptions($("#editPersonForm [name=lifeStatus]"), model.options.lifeStatuses, "unknown");
+  setOptions($("#editPersonForm [name=gender]"), model.options.genders, "unknown");
   setOptions($("#unionForm [name=type]"), model.options.unionTypes, "marriage");
   setOptions($("#unionForm [name=status]"), model.options.unionStatuses, "married");
   setOptions($("#parentForm [name=parentType]"), model.options.parentTypes, "biological");
@@ -235,9 +348,9 @@ function renderRelationshipRecords() {
       const row = node("div", "record-row");
       const copy = node("p", ""); copy.append(node("strong", "", record.title), node("small", "", record.detail)); row.append(copy);
       if (isAdmin()) {
-        const archive = node("button", "button danger", "Archive"); archive.type = "button";
-        archive.addEventListener("click", async () => { if (!confirm(`Archive ${record.title}?`)) return; try { await request(record.path, { method: "DELETE" }); await reload(); toast("Relationship archived"); } catch (error) { toast(error.message, true); } });
-        row.append(archive);
+        const remove = node("button", "button danger", "Delete"); remove.type = "button";
+        remove.addEventListener("click", async () => { if (!confirm(`Permanently delete ${record.title}? This cannot be undone.`)) return; try { await request(record.path, { method: "DELETE" }); await reload(); toast("Relationship permanently deleted"); } catch (error) { toast(error.message, true); } });
+        row.append(remove);
       }
       section.append(row);
     }
@@ -257,7 +370,7 @@ function renderRelationshipRecords() {
 
 function render() {
   $("#treeName").textContent = model.state.workspace?.name || "Family archive";
-  configureAccess(); renderStats(); renderTree(); renderStories(); renderForms(); renderRelationshipRecords(); renderAudit();
+  configureAccess(); renderStats(); renderTree(); renderGraph(); renderStories(); renderForms(); renderRelationshipRecords(); renderAudit();
 }
 
 function switchView(name) {
@@ -282,12 +395,20 @@ function bind() {
   $("#loginForm").addEventListener("submit", async (event) => { event.preventDefault(); const form = event.currentTarget; $("#loginError").textContent = ""; try { await request("/api/auth/login", { method: "POST", body: JSON.stringify(formData(form)) }); $("#loginDialog").close(); form.reset(); await reload(); toast("Signed in"); } catch (error) { $("#loginError").textContent = error.message; } });
   $(".close-dialog").addEventListener("click", () => $("#personDialog").close());
   $(".close-login").addEventListener("click", () => $("#loginDialog").close());
+  $$(".close-edit").forEach((button) => button.addEventListener("click", () => $("#editPersonDialog").close()));
+  $("#generationDepth").addEventListener("change", renderGraph);
+  $("#exportPng").addEventListener("click", () => exportGraph("png"));
+  $("#exportPdf").addEventListener("click", () => exportGraph("pdf"));
   $("#explainButton").addEventListener("click", async () => {
     const result = $("#relationshipResult");
     if (!model.currentUser) { result.textContent = "Sign in to calculate relationships across private family records."; return; }
-    try { const data = await request("/api/relationships/explain", { method: "POST", body: JSON.stringify({ fromId: $("#relationshipFrom").value, toId: $("#relationshipTo").value }) }); result.classList.remove("empty"); result.replaceChildren(node("p", "eyebrow", "Documented connection"), node("h3", "", data.label)); } catch (error) { toast(error.message, true); }
+    try {
+      const data = await request("/api/relationships/explain", { method: "POST", body: JSON.stringify({ fromId: $("#relationshipFrom").value, toId: $("#relationshipTo").value }) }); result.classList.remove("empty"); result.replaceChildren(node("p", "eyebrow", "Documented connection"), node("h3", "", data.label));
+      if (data.path?.length) { const path = node("div", "relation-path"); data.path.forEach((person, index) => { const personButton = node("button", "path-person", person.displayName); personButton.type = "button"; personButton.addEventListener("click", () => showPerson(person.id)); path.append(personButton); if (data.pathEdges[index]) path.append(node("span", "path-edge", data.pathEdges[index])); }); result.append(node("p", "muted", "Shortest documented path"), path); }
+    } catch (error) { toast(error.message, true); }
   });
-  $("#personForm").addEventListener("submit", async (event) => { event.preventDefault(); const form = event.currentTarget; const values = formData(form); try { await request("/api/people", { method: "POST", body: JSON.stringify({ displayName: values.displayName, lifeStatus: values.lifeStatus, branch: values.branch, birth: { value: values.birthValue, place: values.birthPlace }, death: { value: values.deathValue }, privacy: values.privacy, bio: values.bio }) }); form.reset(); await reload(); toast("Person added"); } catch (error) { toast(error.message, true); } });
+  $("#personForm").addEventListener("submit", async (event) => { event.preventDefault(); const form = event.currentTarget; const values = formData(form); try { await request("/api/people", { method: "POST", body: JSON.stringify(personPayload(values)) }); form.reset(); await reload(); toast("Person added"); } catch (error) { toast(error.message, true); } });
+  $("#editPersonForm").addEventListener("submit", async (event) => { event.preventDefault(); const form = event.currentTarget; const values = formData(form); try { await request(`/api/people/${encodeURIComponent(values.id)}`, { method: "PATCH", body: JSON.stringify(personPayload(values)) }); $("#editPersonDialog").close(); await reload(); toast("Complete person record updated"); } catch (error) { toast(error.message, true); } });
   $("#unionForm").addEventListener("submit", async (event) => { event.preventDefault(); const form = event.currentTarget; const values = formData(form); try { await request("/api/unions", { method: "POST", body: JSON.stringify({ partnerIds: [values.partnerA, values.partnerB], type: values.type, status: values.status, start: { value: values.start }, end: { value: values.end }, place: values.place, endReason: values.endReason, sourceNote: values.sourceNote }) }); form.reset(); await reload(); toast("Partnership created"); } catch (error) { toast(error.message, true); } });
   $("#parentForm").addEventListener("submit", async (event) => { event.preventDefault(); const form = event.currentTarget; const values = formData(form); try { await request("/api/parent-links", { method: "POST", body: JSON.stringify(values) }); form.reset(); await reload(); toast("Parent and child connected"); } catch (error) { toast(error.message, true); } });
 }
@@ -295,5 +416,5 @@ function bind() {
 bind();
 reload().then(() => {
   const requested = location.hash.slice(1);
-  if (["tree", "explore", "history", "admin", "audit"].includes(requested)) switchView(requested);
+  if (["tree", "graph", "explore", "history", "admin", "audit"].includes(requested)) switchView(requested);
 }).catch((error) => toast(error.message, true));

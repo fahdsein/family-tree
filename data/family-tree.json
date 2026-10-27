@@ -6,6 +6,11 @@
   },
   "people": [
     {
+      "gender": "male",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "hassan",
       "displayName": "Hassan Rahman",
       "alternateNames": [],
@@ -30,6 +35,11 @@
       "updatedAt": "2026-10-27T02:46:40.189Z"
     },
     {
+      "gender": "male",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "yusuf",
       "displayName": "Yusuf Rahman",
       "alternateNames": [],
@@ -54,6 +64,11 @@
       "updatedAt": "2026-10-27T02:46:40.189Z"
     },
     {
+      "gender": "female",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "amina",
       "displayName": "Amina Rahman",
       "alternateNames": [],
@@ -78,6 +93,11 @@
       "updatedAt": "2026-10-27T02:46:40.189Z"
     },
     {
+      "gender": "male",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "farid",
       "displayName": "Farid Rahman",
       "alternateNames": [],
@@ -102,6 +122,11 @@
       "updatedAt": "2026-10-27T02:46:40.189Z"
     },
     {
+      "gender": "female",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "mariam",
       "displayName": "Mariam Yusuf",
       "alternateNames": [],
@@ -126,6 +151,11 @@
       "updatedAt": "2026-10-27T02:46:40.189Z"
     },
     {
+      "gender": "male",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "omar",
       "displayName": "Omar Farid",
       "alternateNames": [],
@@ -150,6 +180,11 @@
       "updatedAt": "2026-10-27T02:46:40.190Z"
     },
     {
+      "gender": "female",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "noura",
       "displayName": "Noura Saleh",
       "alternateNames": [],
@@ -174,6 +209,11 @@
       "updatedAt": "2026-10-27T02:46:40.190Z"
     },
     {
+      "gender": "female",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "samira",
       "displayName": "Samira Omar",
       "alternateNames": [],
@@ -198,6 +238,11 @@
       "updatedAt": "2026-10-27T02:46:40.190Z"
     },
     {
+      "gender": "male",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "tariq",
       "displayName": "Tariq Noura",
       "alternateNames": [],
@@ -222,6 +267,11 @@
       "updatedAt": "2026-10-27T02:46:40.190Z"
     },
     {
+      "gender": "female",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "leila",
       "displayName": "Leila Samira",
       "alternateNames": [],
@@ -246,6 +296,11 @@
       "updatedAt": "2026-10-27T02:46:40.190Z"
     },
     {
+      "gender": "male",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "kareem",
       "displayName": "Kareem Tariq",
       "alternateNames": [],
@@ -270,6 +325,11 @@
       "updatedAt": "2026-10-27T02:46:40.190Z"
     },
     {
+      "gender": "male",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "idris",
       "displayName": "Idris Malik",
       "alternateNames": [],
@@ -294,6 +354,11 @@
       "updatedAt": "2026-10-27T02:46:40.190Z"
     },
     {
+      "gender": "female",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "maya",
       "displayName": "Maya Leila",
       "alternateNames": [],
@@ -318,6 +383,11 @@
       "updatedAt": "2026-10-27T02:46:40.190Z"
     },
     {
+      "gender": "female",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "hana",
       "displayName": "Hana Rahman",
       "alternateNames": [],
@@ -342,6 +412,11 @@
       "updatedAt": "2026-10-27T02:46:40.190Z"
     },
     {
+      "gender": "male",
+      "photo": {
+        "url": "",
+        "caption": ""
+      },
       "id": "sami",
       "displayName": "Sami Rahman",
       "alternateNames": [],

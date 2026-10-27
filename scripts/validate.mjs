@@ -8,6 +8,9 @@ await Promise.all(required.map((file) => access(resolve(root, file))));
 const html = await readFile(resolve(root, "public/index.html"), "utf8");
 const css = await readFile(resolve(root, "public/styles.css"), "utf8");
 if (/https?:\/\//.test(html)) throw new Error("Public HTML must not depend on external CDNs");
+for (const requiredMarkup of ["id=\"familyGraph\"", "id=\"exportPng\"", "id=\"exportPdf\"", "/vendor/jspdf.umd.min.js", "id=\"editPersonForm\""]) {
+  if (!html.includes(requiredMarkup)) throw new Error(`Missing feature markup: ${requiredMarkup}`);
+}
 const themes = ["heritage", "evergreen", "nordic", "golden", "midnight", "royal", "blossom", "deep-pine", "mossy-grove", "fern-cedar", "misty-redwood", "golden-leaves", "emerald-archive", "botanical"];
 for (const theme of themes) {
   if (!css.includes(`[data-theme="${theme}"]`)) throw new Error(`Missing theme: ${theme}`);
