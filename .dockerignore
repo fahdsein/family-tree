@@ -1,0 +1,6 @@
+node_modules
+.git
+.env
+.npm-cache
+coverage
+roots_leaves_family_tree_web_app.html

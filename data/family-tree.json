@@ -1,0 +1,628 @@
+{
+  "workspace": {
+    "id": "roots-demo",
+    "name": "The Rahman Family Archive",
+    "createdAt": "2026-10-27T02:46:40.188Z"
+  },
+  "people": [
+    {
+      "id": "hassan",
+      "displayName": "Hassan Rahman",
+      "alternateNames": [],
+      "lifeStatus": "deceased",
+      "birth": {
+        "value": "1840",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "1912",
+        "precision": "year",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Rahman",
+      "bio": "The earliest documented ancestor in this archive.",
+      "privacy": "family",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.189Z",
+      "updatedAt": "2026-10-27T02:46:40.189Z"
+    },
+    {
+      "id": "yusuf",
+      "displayName": "Yusuf Rahman",
+      "alternateNames": [],
+      "lifeStatus": "deceased",
+      "birth": {
+        "value": "1865",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "1931",
+        "precision": "year",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Northern branch",
+      "bio": "",
+      "privacy": "family",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.189Z",
+      "updatedAt": "2026-10-27T02:46:40.189Z"
+    },
+    {
+      "id": "amina",
+      "displayName": "Amina Rahman",
+      "alternateNames": [],
+      "lifeStatus": "deceased",
+      "birth": {
+        "value": "1869",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "1940",
+        "precision": "year",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Coastal branch",
+      "bio": "",
+      "privacy": "family",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.189Z",
+      "updatedAt": "2026-10-27T02:46:40.189Z"
+    },
+    {
+      "id": "farid",
+      "displayName": "Farid Rahman",
+      "alternateNames": [],
+      "lifeStatus": "deceased",
+      "birth": {
+        "value": "1891",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "1962",
+        "precision": "year",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Northern branch",
+      "bio": "",
+      "privacy": "family",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.189Z",
+      "updatedAt": "2026-10-27T02:46:40.189Z"
+    },
+    {
+      "id": "mariam",
+      "displayName": "Mariam Yusuf",
+      "alternateNames": [],
+      "lifeStatus": "deceased",
+      "birth": {
+        "value": "1897",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "1970",
+        "precision": "year",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Coastal branch",
+      "bio": "",
+      "privacy": "family",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.189Z",
+      "updatedAt": "2026-10-27T02:46:40.189Z"
+    },
+    {
+      "id": "omar",
+      "displayName": "Omar Farid",
+      "alternateNames": [],
+      "lifeStatus": "deceased",
+      "birth": {
+        "value": "1920",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "1995",
+        "precision": "year",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Northern branch",
+      "bio": "",
+      "privacy": "family",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z",
+      "updatedAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "noura",
+      "displayName": "Noura Saleh",
+      "alternateNames": [],
+      "lifeStatus": "deceased",
+      "birth": {
+        "value": "1925",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "2001",
+        "precision": "year",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Coastal branch",
+      "bio": "",
+      "privacy": "family",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z",
+      "updatedAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "samira",
+      "displayName": "Samira Omar",
+      "alternateNames": [],
+      "lifeStatus": "living",
+      "birth": {
+        "value": "1950",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "",
+        "precision": "unknown",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Northern branch",
+      "bio": "",
+      "privacy": "private",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z",
+      "updatedAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "tariq",
+      "displayName": "Tariq Noura",
+      "alternateNames": [],
+      "lifeStatus": "living",
+      "birth": {
+        "value": "1954",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "",
+        "precision": "unknown",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Coastal branch",
+      "bio": "",
+      "privacy": "private",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z",
+      "updatedAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "leila",
+      "displayName": "Leila Samira",
+      "alternateNames": [],
+      "lifeStatus": "living",
+      "birth": {
+        "value": "1978",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "",
+        "precision": "unknown",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Northern branch",
+      "bio": "Archivist and oral-history interviewer.",
+      "privacy": "private",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z",
+      "updatedAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "kareem",
+      "displayName": "Kareem Tariq",
+      "alternateNames": [],
+      "lifeStatus": "living",
+      "birth": {
+        "value": "1976",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "",
+        "precision": "unknown",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Coastal branch",
+      "bio": "Teacher and keeper of the family recipe notebooks.",
+      "privacy": "private",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z",
+      "updatedAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "idris",
+      "displayName": "Idris Malik",
+      "alternateNames": [],
+      "lifeStatus": "living",
+      "birth": {
+        "value": "1975",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "",
+        "precision": "unknown",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Malik",
+      "bio": "",
+      "privacy": "private",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z",
+      "updatedAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "maya",
+      "displayName": "Maya Leila",
+      "alternateNames": [],
+      "lifeStatus": "living",
+      "birth": {
+        "value": "2009",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "",
+        "precision": "unknown",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Northern branch",
+      "bio": "",
+      "privacy": "private",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z",
+      "updatedAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "hana",
+      "displayName": "Hana Rahman",
+      "alternateNames": [],
+      "lifeStatus": "living",
+      "birth": {
+        "value": "2019",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "",
+        "precision": "unknown",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Rahman",
+      "bio": "",
+      "privacy": "private",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z",
+      "updatedAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "sami",
+      "displayName": "Sami Rahman",
+      "alternateNames": [],
+      "lifeStatus": "living",
+      "birth": {
+        "value": "2022",
+        "precision": "year",
+        "place": ""
+      },
+      "death": {
+        "value": "",
+        "precision": "unknown",
+        "place": ""
+      },
+      "pronouns": "",
+      "branch": "Rahman",
+      "bio": "",
+      "privacy": "private",
+      "tags": [],
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z",
+      "updatedAt": "2026-10-27T02:46:40.190Z"
+    }
+  ],
+  "unions": [
+    {
+      "id": "union-leila-idris",
+      "partnerIds": [
+        "leila",
+        "idris"
+      ],
+      "type": "marriage",
+      "status": "divorced",
+      "start": {
+        "value": "2007",
+        "precision": "year"
+      },
+      "end": {
+        "value": "2015",
+        "precision": "year"
+      },
+      "endReason": "divorce",
+      "place": "Jakarta",
+      "notes": "",
+      "privacy": "family",
+      "sourceNote": "",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z",
+      "updatedAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "union-leila-kareem",
+      "partnerIds": [
+        "leila",
+        "kareem"
+      ],
+      "type": "marriage",
+      "status": "married",
+      "start": {
+        "value": "2017-08",
+        "precision": "month"
+      },
+      "end": {
+        "value": "",
+        "precision": "unknown"
+      },
+      "endReason": "",
+      "place": "Bandung",
+      "notes": "",
+      "privacy": "family",
+      "sourceNote": "Family marriage certificate",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.191Z",
+      "updatedAt": "2026-10-27T02:46:40.191Z"
+    }
+  ],
+  "parentLinks": [
+    {
+      "id": "parent-hassan-yusuf",
+      "parentId": "hassan",
+      "childId": "yusuf",
+      "parentType": "biological",
+      "unionId": null,
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "parent-hassan-amina",
+      "parentId": "hassan",
+      "childId": "amina",
+      "parentType": "biological",
+      "unionId": null,
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "parent-yusuf-farid",
+      "parentId": "yusuf",
+      "childId": "farid",
+      "parentType": "biological",
+      "unionId": null,
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "parent-amina-mariam",
+      "parentId": "amina",
+      "childId": "mariam",
+      "parentType": "biological",
+      "unionId": null,
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "parent-farid-omar",
+      "parentId": "farid",
+      "childId": "omar",
+      "parentType": "biological",
+      "unionId": null,
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "parent-mariam-noura",
+      "parentId": "mariam",
+      "childId": "noura",
+      "parentType": "biological",
+      "unionId": null,
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "parent-omar-samira",
+      "parentId": "omar",
+      "childId": "samira",
+      "parentType": "biological",
+      "unionId": null,
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "parent-noura-tariq",
+      "parentId": "noura",
+      "childId": "tariq",
+      "parentType": "biological",
+      "unionId": null,
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "parent-samira-leila",
+      "parentId": "samira",
+      "childId": "leila",
+      "parentType": "biological",
+      "unionId": null,
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "parent-tariq-kareem",
+      "parentId": "tariq",
+      "childId": "kareem",
+      "parentType": "biological",
+      "unionId": null,
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "parent-leila-maya",
+      "parentId": "leila",
+      "childId": "maya",
+      "parentType": "biological",
+      "unionId": "union-leila-idris",
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "parent-idris-maya",
+      "parentId": "idris",
+      "childId": "maya",
+      "parentType": "biological",
+      "unionId": "union-leila-idris",
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.190Z"
+    },
+    {
+      "id": "parent-leila-hana",
+      "parentId": "leila",
+      "childId": "hana",
+      "parentType": "biological",
+      "unionId": "union-leila-kareem",
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.191Z"
+    },
+    {
+      "id": "parent-kareem-hana",
+      "parentId": "kareem",
+      "childId": "hana",
+      "parentType": "biological",
+      "unionId": "union-leila-kareem",
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.191Z"
+    },
+    {
+      "id": "parent-leila-sami",
+      "parentId": "leila",
+      "childId": "sami",
+      "parentType": "biological",
+      "unionId": "union-leila-kareem",
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.191Z"
+    },
+    {
+      "id": "parent-kareem-sami",
+      "parentId": "kareem",
+      "childId": "sami",
+      "parentType": "biological",
+      "unionId": "union-leila-kareem",
+      "confidence": "confirmed",
+      "sourceNote": "",
+      "privacy": "family",
+      "archivedAt": null,
+      "createdAt": "2026-10-27T02:46:40.191Z"
+    }
+  ],
+  "stories": [
+    {
+      "id": "story-1",
+      "title": "The cedar chest",
+      "body": "Hassan's travel papers and family letters were preserved in a cedar chest for four generations.",
+      "personIds": [
+        "hassan"
+      ],
+      "visibility": "family",
+      "createdAt": "2026-10-27T02:46:40.190Z"
+    }
+  ],
+  "audit": []
+}

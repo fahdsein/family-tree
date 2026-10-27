@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en" data-theme="evergreen">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Roots & Leaves — a private, collaborative family archive.">
+  <title>Roots & Leaves</title>
+  <link rel="stylesheet" href="/styles.css?v=4">
+  <script type="module" src="/app.js?v=4"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#tree" aria-label="Roots and Leaves home">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span><strong>Roots & Leaves</strong><small id="treeName">Family archive</small></span>
+    </a>
+    <nav aria-label="Primary navigation">
+      <button class="nav-button active" data-view="tree">Tree</button>
+      <button class="nav-button" data-view="explore">Relationship explorer</button>
+      <button class="nav-button" data-view="history">Stories</button>
+      <button class="nav-button admin-only" data-view="admin">Manage</button>
+      <button class="nav-button admin-only" data-view="audit">Audit</button>
+    </nav>
+    <div class="top-actions">
+      <label class="theme-label"><span>Theme</span><select id="themePicker" aria-label="Color theme"></select></label>
+      <button id="authButton" class="button secondary">Sign in</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="view-tree" class="view active">
+      <div class="hero">
+        <div><p class="eyebrow">Private family workspace</p><h1>Every connection has a story.</h1><p>Explore people, marriages, parenthood, shared ancestors and the evidence that connects them.</p></div>
+        <div class="stats" id="stats"></div>
+      </div>
+      <div class="toolbar card">
+        <label class="search"><span class="sr-only">Search people</span><input id="search" type="search" placeholder="Search names, branches or biographies"></label>
+        <div class="legend"><span><i class="dot living"></i> Living</span><span><i class="dot deceased"></i> Deceased</span><span><i class="line"></i> Family connection</span></div>
+      </div>
+      <div id="privacyNotice" class="notice hidden">Sign in to view private records about living relatives.</div>
+      <div id="treeCanvas" class="tree-canvas card" aria-live="polite"></div>
+    </section>
+
+    <section id="view-explore" class="view">
+      <div class="section-heading"><div><p class="eyebrow">Relationship explorer</p><h2>How are two people connected?</h2><p>Results are calculated from documented parent and partnership records—not generated guesses.</p></div></div>
+      <div class="explorer card">
+        <label>Person A<select id="relationshipFrom"></select></label>
+        <span class="explorer-arrow" aria-hidden="true">↔</span>
+        <label>Person B<select id="relationshipTo"></select></label>
+        <button id="explainButton" class="button primary">Find relationship</button>
+      </div>
+      <div id="relationshipResult" class="relationship-result card empty">Select two family members to trace their connection.</div>
+    </section>
+
+    <section id="view-history" class="view">
+      <div class="section-heading"><div><p class="eyebrow">Family memory</p><h2>Stories and traditions</h2><p>Preserve context alongside names and dates.</p></div></div>
+      <div id="stories" class="story-grid"></div>
+    </section>
+
+    <section id="view-admin" class="view admin-only">
+      <div class="section-heading"><div><p class="eyebrow">Data stewardship</p><h2>Manage people and relationships</h2><p>Editors may add records. Administrators can also archive records and review history.</p></div></div>
+      <div class="admin-grid">
+        <form id="personForm" class="card form-card">
+          <h3>Add a person</h3>
+          <label>Display name<input name="displayName" required maxlength="100"></label>
+          <div class="two-column"><label>Life status<select name="lifeStatus"></select></label><label>Branch<input name="branch" maxlength="60" placeholder="Family branch"></label></div>
+          <div class="two-column"><label>Birth date or year<input name="birthValue" maxlength="30" placeholder="1984 or circa 1910"></label><label>Birth place<input name="birthPlace" maxlength="140"></label></div>
+          <div class="two-column"><label>Death date or year<input name="deathValue" maxlength="30"></label><label>Privacy<select name="privacy"><option>private</option><option>family</option><option>public</option></select></label></div>
+          <label>Biography<textarea name="bio" rows="4" maxlength="2000"></textarea></label>
+          <button class="button primary" type="submit">Add person</button>
+        </form>
+
+        <form id="unionForm" class="card form-card">
+          <h3>Connect a marriage or partnership</h3>
+          <div class="two-column"><label>Partner A<select name="partnerA" required></select></label><label>Partner B<select name="partnerB" required></select></label></div>
+          <div class="two-column"><label>Type<select name="type"></select></label><label>Status<select name="status"></select></label></div>
+          <div class="two-column"><label>Started<input name="start" maxlength="30" placeholder="2017-08"></label><label>Ended<input name="end" maxlength="30"></label></div>
+          <div class="two-column"><label>Place<input name="place" maxlength="140"></label><label>End reason<input name="endReason" maxlength="100"></label></div>
+          <label>Source or evidence note<textarea name="sourceNote" rows="2" maxlength="500"></textarea></label>
+          <button class="button primary" type="submit">Create relationship</button>
+        </form>
+
+        <form id="parentForm" class="card form-card">
+          <h3>Connect parent and child</h3>
+          <div class="two-column"><label>Parent<select name="parentId" required></select></label><label>Child<select name="childId" required></select></label></div>
+          <div class="two-column"><label>Parent type<select name="parentType"></select></label><label>Associated union<select name="unionId"><option value="">None / unknown</option></select></label></div>
+          <div class="two-column"><label>Confidence<select name="confidence"><option>confirmed</option><option>likely</option><option>uncertain</option><option>disputed</option></select></label><label>Privacy<select name="privacy"><option>family</option><option>private</option><option>public</option></select></label></div>
+          <label>Source or evidence note<textarea name="sourceNote" rows="2" maxlength="500"></textarea></label>
+          <button class="button primary" type="submit">Connect parent and child</button>
+        </form>
+        <section id="relationshipRecords" class="card form-card relationship-records"></section>
+      </div>
+    </section>
+
+    <section id="view-audit" class="view admin-only">
+      <div class="section-heading"><div><p class="eyebrow">Accountability</p><h2>Change history</h2></div></div>
+      <div class="card table-wrap"><table><thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Record</th><th>Summary</th></tr></thead><tbody id="auditRows"></tbody></table></div>
+    </section>
+  </main>
+
+  <dialog id="personDialog" class="dialog"><article><button class="icon-button close-dialog" aria-label="Close">×</button><div id="personDetail"></div></article></dialog>
+  <dialog id="loginDialog" class="dialog small"><form id="loginForm"><button type="button" class="icon-button close-login" aria-label="Close">×</button><p class="eyebrow">Private archive</p><h2>Sign in</h2><p id="loginHint" class="muted"></p><label>Email<input name="email" type="email" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><p id="loginError" class="error" role="alert"></p><button class="button primary" type="submit">Sign in</button></form></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

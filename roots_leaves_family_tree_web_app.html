@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roots & Leaves - Interactive Family Tree</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full bg-slate-50 text-slate-800 font-sans flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+                    <i data-lucide="git-commit" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-900 tracking-tight leading-tight">Roots & Leaves</h1>
+                    <p class="text-xs text-slate-500">The Harrison & Sterling Family Archive</p>
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <nav class="hidden md:flex space-x-1 bg-slate-100 p-1 rounded-xl border border-slate-200/60" id="nav-tabs">
+                <button onclick="switchTab('tree')" id="tab-btn-tree" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all bg-white text-brand-700 shadow-xs flex items-center space-x-2">
+                    <i data-lucide="network" class="w-4 h-4"></i>
+                    <span>Tree View</span>
+                </button>
+                <button onclick="switchTab('timeline')" id="tab-btn-timeline" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-600 hover:text-slate-900 flex items-center space-x-2">
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                    <span>Timeline</span>
+                </button>
+                <button onclick="switchTab('recipes')" id="tab-btn-recipes" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-600 hover:text-slate-900 flex items-center space-x-2">
+                    <i data-lucide="utensils" class="w-4 h-4"></i>
+                    <span>Traditions & Recipes</span>
+                </button>
+            </nav>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-3">
+                <button onclick="openChatModal()" class="hidden sm:flex items-center space-x-2 bg-emerald-50 hover:bg-emerald-100 text-brand-700 px-3.5 py-2 rounded-xl text-sm font-medium transition border border-brand-200/60 shadow-xs">
+                    <i data-lucide="bot" class="w-4 h-4 text-brand-600"></i>
+                    <span>Ask KinBot</span>
+                </button>
+                <button onclick="openAddModal()" class="flex items-center space-x-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-md shadow-brand-600/20">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    <span>Add Member</span>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Navigation bar -->
+        <div class="md:hidden flex border-t border-slate-100 bg-slate-50 px-2 py-1 justify-around">
+            <button onclick="switchTab('tree')" id="mobile-tab-btn-tree" class="px-3 py-1.5 rounded-lg text-xs font-medium text-brand-700 bg-white shadow-xs flex items-center space-x-1">
+                <i data-lucide="network" class="w-3.5 h-3.5"></i><span>Tree</span>
+            </button>
+            <button onclick="switchTab('timeline')" id="mobile-tab-btn-timeline" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 flex items-center space-x-1">
+                <i data-lucide="calendar" class="w-3.5 h-3.5"></i><span>Timeline</span>
+            </button>
+            <button onclick="switchTab('recipes')" id="mobile-tab-btn-recipes" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 flex items-center space-x-1">
+                <i data-lucide="utensils" class="w-3.5 h-3.5"></i><span>Recipes</span>
+            </button>
+            <button onclick="openChatModal()" class="px-3 py-1.5 rounded-lg text-xs font-medium text-brand-700 flex items-center space-x-1">
+                <i data-lucide="bot" class="w-3.5 h-3.5"></i><span>AI Chat</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
+
+        <!-- TAB 1: TREE VIEW -->
+        <div id="tab-content-tree" class="flex-1 flex flex-col space-y-6">
+            <!-- Search and Filters Bar -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="relative w-full sm:w-80">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search family by name..." 
+                        class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition">
+                </div>
+                <div class="flex items-center space-x-3 w-full sm:w-auto justify-end overflow-x-auto pb-1 sm:pb-0">
+                    <span class="text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">Filter Branch:</span>
+                    <button onclick="filterBranch('all')" id="filter-all" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-600 text-white transition shadow-xs whitespace-nowrap">All Tree</button>
+                    <button onclick="filterBranch('Harrison')" id="filter-Harrison" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">Harrison</button>
+                    <button onclick="filterBranch('Sterling')" id="filter-Sterling" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">Sterling</button>
+                </div>
+            </div>
+
+            <!-- Tree Canvas Area -->
+            <div class="flex-1 bg-white rounded-2xl border border-slate-200 shadow-xs p-6 overflow-x-auto relative min-h-[500px] flex flex-col items-center justify-center">
+                
+                <!-- Background decoration grid -->
+                <div class="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] opacity-60 pointer-events-none"></div>
+
+                <div id="treeContainer" class="relative z-10 w-full max-w-5xl flex flex-col items-center space-y-12 py-8">
+                    <!-- Dynamically rendered via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: TIMELINE VIEW -->
+        <div id="tab-content-timeline" class="hidden flex-1 flex-col space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Family Historical Timeline</h2>
+                        <p class="text-xs text-slate-500">Major milestones and life events across generations</p>
+                    </div>
+                </div>
+                <!-- Timeline container -->
+                <div id="timelineContainer" class="relative border-l-2 border-brand-200 ml-4 sm:ml-32 space-y-8 py-4">
+                    <!-- Dynamically rendered via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: TRADITIONS & RECIPES -->
+        <div id="tab-content-recipes" class="hidden flex-1 flex-col space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Heirloom Recipes & Traditions</h2>
+                        <p class="text-xs text-slate-500">Culinary secrets and holiday rituals passed down</p>
+                    </div>
+                </div>
+                <div id="recipesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Dynamically rendered via JS -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MEMBER DETAIL SIDEBAR / MODAL -->
+    <div id="memberModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex justify-end transition-opacity opacity-0 pointer-events-none">
+        <div id="memberModalPanel" class="w-full max-w-md bg-white h-full shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300">
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center space-x-3">
+                    <span id="modalGenBadge" class="px-2.5 py-1 bg-brand-100 text-brand-800 text-xs font-semibold rounded-full">Gen 1</span>
+                    <span id="modalBranchBadge" class="px-2.5 py-1 bg-slate-200 text-slate-700 text-xs font-semibold rounded-full">Harrison</span>
+                </div>
+                <button onclick="closeMemberModal()" class="w-8 h-8 rounded-full bg-slate-200/80 hover:bg-slate-300 flex items-center justify-center text-slate-600 transition">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <!-- Modal Body (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- Avatar & Names -->
+                <div class="flex items-center space-x-4">
+                    <img id="modalAvatar" src="https://placehold.co/100x100/16a34a/ffffff?text=Avatar" alt="Member" class="w-20 h-20 rounded-2xl object-cover shadow-md border-2 border-white">
+                    <div>
+                        <h3 id="modalName" class="text-xl font-bold text-slate-900">Arthur Harrison</h3>
+                        <p id="modalDates" class="text-sm text-slate-500 mt-0.5">1924 – 2008 (Aged 84)</p>
+                        <p id="modalRelation" class="text-xs text-brand-600 font-medium mt-1">Patriarch</p>
+                    </div>
+                </div>
+
+                <!-- Bio -->
+                <div class="space-y-2">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Biography</h4>
+                    <p id="modalBio" class="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100"></p>
+                </div>
+
+                <!-- Ask Me About Tags -->
+                <div class="space-y-2">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Ask Me About...</h4>
+                    <div id="modalTags" class="flex flex-wrap gap-2">
+                        <!-- Tags inserted here -->
+                    </div>
+                </div>
+
+                <!-- Life Milestones -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Life Milestones</h4>
+                    <div id="modalMilestones" class="space-y-2">
+                        <!-- Milestones inserted here -->
+                    </div>
+                </div>
+
+                <!-- Photo Gallery Thumbnails -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Photo Archive</h4>
+                    <div id="modalPhotos" class="grid grid-cols-3 gap-2">
+                        <!-- Photos inserted here -->
+                    </div>
+                </div>
+            </div>
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
+                <button onclick="deleteMember(currentSelectedId)" class="px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-xl text-xs font-medium transition flex items-center space-x-1.5">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    <span>Delete Member</span>
+                </button>
+                <button onclick="closeMemberModal()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-medium transition">
+                    Close Profile
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD MEMBER MODAL -->
+    <div id="addModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 transition-opacity opacity-0 pointer-events-none">
+        <div id="addModalPanel" class="w-full max-w-lg bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden transform scale-95 transition-all duration-300">
+            <div class="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <h3 class="font-bold text-slate-900 text-lg flex items-center space-x-2">
+                    <i data-lucide="user-plus" class="w-5 h-5 text-brand-600"></i>
+                    <span>Add New Family Member</span>
+                </h3>
+                <button onclick="closeAddModal()" class="w-8 h-8 rounded-full bg-slate-200/80 hover:bg-slate-300 flex items-center justify-center text-slate-600 transition">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <form id="addMemberForm" onsubmit="handleAddNewMember(event)" class="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Full Name *</label>
+                        <input type="text" id="addName" required placeholder="e.g. Eleanor Vance" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Branch *</label>
+                        <select id="addBranch" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                            <option value="Harrison">Harrison</option>
+                            <option value="Sterling">Sterling</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Generation *</label>
+                        <select id="addGen" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                            <option value="1">Generation 1 (Elders)</option>
+                            <option value="2">Generation 2 (Parents)</option>
+                            <option value="3" selected>Generation 3 (Children)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Birth Year</label>
+                        <input type="text" id="addBirth" placeholder="1992" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Death Year (opt)</label>
+                        <input type="text" id="addDeath" placeholder="Present" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Relationship Title</label>
+                        <input type="text" id="addRelation" placeholder="e.g. Granddaughter" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Avatar Image URL</label>
+                        <input type="text" id="addAvatar" placeholder="https://..." class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Biography</label>
+                    <textarea id="addBio" rows="3" placeholder="Write a short biography..." class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Ask Me About (comma separated)</label>
+                    <input type="text" id="addTags" placeholder="e.g. WWII stories, Baking, Genealogy" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                </div>
+
+                <div class="pt-4 flex justify-end space-x-3 border-t border-slate-200">
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 border border-slate-200 hover:bg-slate-100 rounded-xl text-sm font-medium transition text-slate-600">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-medium transition shadow-md shadow-brand-600/20">Save Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- AI CHAT ASSISTANT (KINBOT) MODAL -->
+    <div id="chatModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 transition-opacity opacity-0 pointer-events-none">
+        <div id="chatModalPanel" class="w-full max-w-lg bg-white rounded-2xl shadow-2xl flex flex-col h-[550px] overflow-hidden transform scale-95 transition-all duration-300">
+            <!-- Header -->
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-emerald-50">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-xs">
+                        <i data-lucide="bot" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-sm">KinBot Genealogist</h3>
+                        <p class="text-xs text-brand-700 flex items-center space-x-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>AI Assistant Ready</span>
+                        </p>
+                    </div>
+                </div>
+                <button onclick="closeChatModal()" class="w-8 h-8 rounded-full bg-slate-200/80 hover:bg-slate-300 flex items-center justify-center text-slate-600 transition">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <!-- Chat Messages Stream -->
+            <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50">
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs shrink-0 font-bold">AI</div>
+                    <div class="bg-white p-3.5 rounded-2xl shadow-xs border border-slate-200 text-sm text-slate-700 max-w-[85%]">
+                        Hello! I'm KinBot, your AI family tree assistant. Ask me anything about the Harrison & Sterling family members, relationships, or history!
+                    </div>
+                </div>
+            </div>
+            <!-- Quick Suggestions -->
+            <div class="px-4 py-2 bg-white border-t border-slate-100 flex items-center space-x-2 overflow-x-auto">
+                <button onclick="askKinBotQuick('Who are the patriarchs?')" class="px-3 py-1 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-600 rounded-full text-xs font-medium whitespace-nowrap transition border border-slate-200">Who are the patriarchs?</button>
+                <button onclick="askKinBotQuick('How is Clara related to Arthur?')" class="px-3 py-1 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-600 rounded-full text-xs font-medium whitespace-nowrap transition border border-slate-200">Clara & Arthur relation?</button>
+                <button onclick="askKinBotQuick('List all generations')" class="px-3 py-1 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-600 rounded-full text-xs font-medium whitespace-nowrap transition border border-slate-200">List all generations</button>
+            </div>
+            <!-- Input Area -->
+            <div class="p-3 bg-white border-t border-slate-200 flex items-center space-x-2">
+                <input type="text" id="chatInput" onkeydown="if(event.key==='Enter') sendChatMessage()" placeholder="Ask about relationships, history..." class="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                <button onclick="sendChatMessage()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition shadow-md shadow-brand-600/20 flex items-center justify-center">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Pre-populated Family Data (8 interconnected members across 3 generations)
+        let familyData = [
+            {
+                id: 1,
+                name: "Arthur Harrison",
+                branch: "Harrison",
+                gen: 1,
+                birth: "1924",
+                death: "2008",
+                relation: "Patriarch & WWII Vet",
+                avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200", // using reliable portrait style
+                bio: "Arthur served as a naval engineer in the Pacific before returning home to Chicago to establish Harrison Ironworks. He was an avid chess player and storyteller.",
+                tags: ["WWII Stories", "Ironworks History", "Chicago 1950s"],
+                milestones: [
+                    { year: "1924", title: "Born in Chicago, Illinois" },
+                    { year: "1943", title: "Enlisted in US Navy" },
+                    { year: "1952", title: "Founded Harrison Ironworks" },
+                    { year: "2008", title: "Passed away peacefully at age 84" }
+                ],
+                photos: [
+                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
+                    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200"
+                ]
+            },
+            {
+                id: 2,
+                name: "Margaret Sterling",
+                branch: "Sterling",
+                gen: 1,
+                birth: "1928",
+                death: "2015",
+                relation: "Matriarch & Botanist",
+                avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200",
+                bio: "Margaret was a pioneering botanist at the Chicago Botanical Gardens. Her famous rose garden hybridization won three state fair awards in 1974.",
+                tags: ["Botanical Secrets", "Heirloom Roses", "European Travel"],
+                milestones: [
+                    { year: "1928", title: "Born in Boston, Massachusetts" },
+                    { year: "1950", title: "Graduated in Botany from University of Chicago" },
+                    { year: "1974", title: "Awarded State Fair Horticulture Medal" }
+                ],
+                photos: [
+                    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200"
+                ]
+            },
+            {
+                id: 3,
+                name: "Robert Harrison",
+                branch: "Harrison",
+                gen: 2,
+                birth: "1955",
+                death: "Present",
+                relation: "Eldest Son & Architect",
+                avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200",
+                bio: "Robert followed his father's creative eye into structural architecture, designing several landmark municipal buildings across the Midwest.",
+                tags: ["Mid-Century Architecture", "Civil Rights Era", "Fishing"],
+                milestones: [
+                    { year: "1955", title: "Born in Chicago" },
+                    { year: "1979", title: "Master of Architecture from MIT" },
+                    { year: "1988", title: "Opened Harrison & Associates Design Firm" }
+                ],
+                photos: [
+                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200"
+                ]
+            },
+            {
+                id: 4,
+                name: "Elena Sterling-Harrison",
+                branch: "Sterling",
+                gen: 2,
+                birth: "1958",
+                death: "Present",
+                relation: "Art Historian & Author",
+                avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200",
+                bio: "Combining the Sterling botanical passion with artistic flair, Elena authored two books on European impressionist painters.",
+                tags: ["Art History", "Italian Cooking", "Publishing"],
+                milestones: [
+                    { year: "1958", title: "Born in Evanston, IL" },
+                    { year: "1982", title: "Published first book on Renaissance Art" }
+                ],
+                photos: []
+            },
+            {
+                id: 5,
+                name: "Marcus Harrison",
+                branch: "Harrison",
+                gen: 3,
+                birth: "1985",
+                death: "Present",
+                relation: "Software Engineer",
+                avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=200",
+                bio: "Marcus built early distributed systems in Silicon Valley and is passionate about preserving family history digitally.",
+                tags: ["Tech Startups", "Genealogy Apps", "Photography"],
+                milestones: [
+                    { year: "1985", title: "Born in Chicago" },
+                    { year: "2007", title: "Graduated Stanford Computer Science" }
+                ],
+                photos: []
+            },
+            {
+                id: 6,
+                name: "Clara Harrison",
+                branch: "Harrison",
+                gen: 3,
+                birth: "1990",
+                death: "Present",
+                relation: "Doctor of Pediatrics",
+                avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=200",
+                bio: "Clara works at Northwestern Memorial Hospital specializing in neonatal care and volunteers in community health clinics.",
+                tags: ["Pediatric Medicine", "Marathons", "Piano"],
+                milestones: [
+                    { year: "1990", title: "Born in Chicago" },
+                    { year: "2016", title: "Completed Medical Residency" }
+                ],
+                photos: []
+            }
+        ];
+
+        let recipesData = [
+            {
+                title: "Margaret’s Secret Sourdough Bread",
+                origin: "Passed down from Margaret Sterling (1950)",
+                desc: "A 70-year-old active sourdough starter brought from Boston. Known for its airy crumb and golden crust.",
+                ingredients: ["Starter Culture", "Unbleached Bread Flour", "Filtered Water", "Sea Salt"],
+                author: "Margaret Sterling"
+            },
+            {
+                title: "Arthur’s Sunday Polish Pierogi",
+                origin: "Adapted by Arthur Harrison from Chicago neighborhood bakers",
+                desc: "Hand-rolled potato and sharp cheddar dumplings tossed in caramelized sweet onions and butter.",
+                ingredients: ["Potatoes", "Sharp Cheddar", "Butter", "Yellow Onions", "Sour Cream"],
+                author: "Arthur Harrison"
+            }
+        ];
+
+        let currentFilter = 'all';
+        let currentSearchQuery = '';
+        let currentSelectedId = null;
+
+        // Initialize Lucide icons on load
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            renderTree();
+            renderTimeline();
+            renderRecipes();
+        });
+
+        // Tab Switching Logic
+        function switchTab(tabName) {
+            ['tree', 'timeline', 'recipes'].forEach(t => {
+                document.getElementById(`tab-content-${t}`).classList.add('hidden');
+                document.getElementById(`tab-content-${t}`).classList.remove('flex');
+                
+                const btnDesktop = document.getElementById(`tab-btn-${t}`);
+                if(btnDesktop) {
+                    btnDesktop.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-all text-slate-600 hover:text-slate-900 flex items-center space-x-2";
+                }
+                const btnMobile = document.getElementById(`mobile-tab-btn-${t}`);
+                if(btnMobile) {
+                    btnMobile.className = "px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 flex items-center space-x-1";
+                }
+            });
+
+            const activeContent = document.getElementById(`tab-content-${tabName}`);
+            activeContent.classList.remove('hidden');
+            activeContent.classList.add('flex');
+
+            const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+            if(activeBtn) {
+                activeBtn.className = "px-4 py-1.5 rounded-lg text-sm font-medium transition-all bg-white text-brand-700 shadow-xs flex items-center space-x-2";
+            }
+            const activeMobBtn = document.getElementById(`mobile-tab-btn-${tabName}`);
+            if(activeMobBtn) {
+                activeMobBtn.className = "px-3 py-1.5 rounded-lg text-xs font-medium text-brand-700 bg-white shadow-xs flex items-center space-x-1";
+            }
+        }
+
+        // Render Interactive Tree View grouped by Generation
+        function renderTree() {
+            const container = document.getElementById('treeContainer');
+            container.innerHTML = '';
+
+            // Filter data
+            let filtered = familyData.filter(m => {
+                let matchesBranch = (currentFilter === 'all' || m.branch === currentFilter);
+                let matchesSearch = m.name.toLowerCase().includes(currentSearchQuery.toLowerCase()) || m.relation.toLowerCase().includes(currentSearchQuery.toLowerCase());
+                return matchesBranch && matchesSearch;
+            });
+
+            if(filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <i data-lucide="user-x" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+                        <p class="text-slate-500 font-medium">No family members found.</p>
+                        <p class="text-xs text-slate-400 mt-1">Try adjusting your search or branch filter.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            // Group by Generations (1, 2, 3)
+            let generations = [1, 2, 3];
+            generations.forEach(genNum => {
+                let genMembers = filtered.filter(m => m.gen === genNum);
+                if(genMembers.length === 0) return;
+
+                let genWrapper = document.createElement('div');
+                genWrapper.className = "flex flex-col items-center w-full space-y-4";
+
+                // Generation Level Header Badge
+                let genHeader = document.createElement('div');
+                genHeader.className = "px-4 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-bold uppercase tracking-wider text-slate-500 shadow-xs flex items-center space-x-1.5";
+                genHeader.innerHTML = `<i data-lucide="layers" class="w-3.5 h-3.5 text-brand-600"></i><span>Generation ${genNum} (${genNum === 1 ? 'Elders' : genNum === 2 ? 'Parents' : 'Children'})</span>`;
+                genWrapper.appendChild(genHeader);
+
+                // Cards Row
+                let cardsRow = document.createElement('div');
+                cardsRow.className = "flex flex-wrap justify-center gap-6 w-full";
+
+                genMembers.forEach(member => {
+                    let card = document.createElement('div');
+                    card.onclick = () => openMemberModal(member.id);
+                    card.className = "bg-white hover:bg-slate-50/80 border border-slate-200/80 hover:border-brand-500/50 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer w-64 flex items-center space-x-4 relative group";
+                    
+                    let branchColor = member.branch === 'Harrison' ? 'bg-brand-100 text-brand-800' : 'bg-amber-100 text-amber-800';
+
+                    card.innerHTML = `
+                        <div class="relative shrink-0">
+                            <img src="${member.avatar}" alt="${member.name}" class="w-14 h-14 rounded-xl object-cover shadow-xs border border-slate-100 group-hover:scale-105 transition">
+                            <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-0.5">
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md ${branchColor}">${member.branch}</span>
+                            </div>
+                            <h4 class="font-bold text-slate-900 text-sm truncate group-hover:text-brand-600 transition">${member.name}</h4>
+                            <p class="text-xs text-slate-500 truncate">${member.birth} – ${member.death}</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5 truncate">${member.relation}</p>
+                        </div>
+                    `;
+                    cardsRow.appendChild(card);
+                });
+
+                genWrapper.appendChild(cardsRow);
+                container.appendChild(genWrapper);
+            });
+
+            lucide.createIcons();
+        }
+
+        // Render Timeline
+        function renderTimeline() {
+            const container = document.getElementById('timelineContainer');
+            container.innerHTML = '';
+
+            // Collect all milestones from all family members
+            let allEvents = [];
+            familyData.forEach(member => {
+                if(member.milestones) {
+                    member.milestones.forEach(m => {
+                        allEvents.push({
+                            year: parseInt(m.year) || 0,
+                            yearStr: m.year,
+                            title: m.title,
+                            memberName: member.name,
+                            avatar: member.avatar
+                        });
+                    });
+                }
+            });
+
+            // Sort by year ascending
+            allEvents.sort((a, b) => a.year - b.year);
+
+            allEvents.forEach(evt => {
+                let item = document.createElement('div');
+                item.className = "relative pl-8 sm:pl-10 group";
+                item.innerHTML = `
+                    <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-brand-600 border-4 border-white shadow-md"></div>
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs hover:border-brand-300 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div class="flex items-center space-x-3">
+                            <img src="${evt.avatar}" class="w-10 h-10 rounded-xl object-cover shadow-xs border">
+                            <div>
+                                <span class="text-xs font-bold px-2 py-0.5 bg-brand-50 text-brand-700 rounded-md">${evt.yearStr}</span>
+                                <h4 class="font-bold text-slate-900 text-sm mt-1">${evt.title}</h4>
+                            </div>
+                        </div>
+                        <span class="text-xs text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-lg">${evt.memberName}</span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        // Render Recipes
+        function renderRecipes() {
+            const container = document.getElementById('recipesContainer');
+            container.innerHTML = '';
+
+            recipesData.forEach(recipe => {
+                let card = document.createElement('div');
+                card.className = "bg-white p-6 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition flex flex-col justify-between";
+                
+                let ingredientsHtml = recipe.ingredients.map(i => `<span class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium">${i}</span>`).join('');
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-semibold rounded-full flex items-center space-x-1">
+                                <i data-lucide="utensils" class="w-3 h-3"></i><span>Family Recipe</span>
+                            </span>
+                            <span class="text-xs text-slate-400">By ${recipe.author}</span>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-base mb-1">${recipe.title}</h3>
+                        <p class="text-xs text-brand-600 font-medium mb-3">${recipe.origin}</p>
+                        <p class="text-sm text-slate-600 mb-4">${recipe.desc}</p>
+                        <div class="space-y-1.5 mb-6">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Key Ingredients</h4>
+                            <div class="flex flex-wrap gap-1.5">${ingredientsHtml}</div>
+                        </div>
+                    </div>
+                    <button onclick="alertRecipeSaved('${recipe.title}')" class="w-full py-2 bg-slate-50 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-medium text-xs rounded-xl border border-slate-200 transition flex items-center justify-center space-x-1.5">
+                        <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
+                        <span>Save Recipe to Cookbook</span>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function alertRecipeSaved(title) {
+            // Safe custom notification banner instead of alert()
+            showToast(`Successfully saved "${title}" to your cookbook!`);
+        }
+
+        function showToast(message) {
+            let toast = document.createElement('div');
+            toast.className = "fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl text-xs font-medium flex items-center space-x-2 animate-bounce";
+            toast.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        // Search and Filter handling
+        function handleSearch() {
+            currentSearchQuery = document.getElementById('searchInput').value;
+            renderTree();
+        }
+
+        function filterBranch(branch) {
+            currentFilter = branch;
+            ['all', 'Harrison', 'Sterling'].forEach(b => {
+                let btn = document.getElementById(`filter-${b}`);
+                if(btn) {
+                    if(b === branch) {
+                        btn.className = "px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-600 text-white transition shadow-xs whitespace-nowrap";
+                    } else {
+                        btn.className = "px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap";
+                    }
+                }
+            });
+            renderTree();
+        }
+
+        // Member Detail Modal Controls
+        function openMemberModal(id) {
+            currentSelectedId = id;
+            let member = familyData.find(m => m.id === id);
+            if(!member) return;
+
+            document.getElementById('modalAvatar').src = member.avatar;
+            document.getElementById('modalName').textContent = member.name;
+            document.getElementById('modalDates').textContent = `${member.birth} – ${member.death} (${calcAge(member.birth, member.death)})`;
+            document.getElementById('modalRelation').textContent = member.relation;
+            document.getElementById('modalBio').textContent = member.bio;
+            
+            document.getElementById('modalGenBadge').textContent = `Gen ${member.gen}`;
+            document.getElementById('modalBranchBadge').textContent = member.branch;
+
+            // Render Tags
+            let tagsContainer = document.getElementById('modalTags');
+            tagsContainer.innerHTML = member.tags.map(tag => `<span class="px-2.5 py-1 bg-brand-50 text-brand-700 rounded-lg text-xs font-medium border border-brand-100">#${tag}</span>`).join('');
+
+            // Render Milestones
+            let milestonesContainer = document.getElementById('modalMilestones');
+            milestonesContainer.innerHTML = member.milestones.map(m => `
+                <div class="flex items-center space-x-3 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    <span class="font-bold text-brand-600 shrink-0">${m.year}</span>
+                    <span class="text-slate-600">${m.title}</span>
+                </div>
+            `).join('');
+
+            // Render Photos
+            let photosContainer = document.getElementById('modalPhotos');
+            if(member.photos && member.photos.length > 0) {
+                photosContainer.innerHTML = member.photos.map(p => `<img src="${p}" class="w-full h-20 rounded-xl object-cover border shadow-xs">`).join('');
+            } else {
+                photosContainer.innerHTML = `<p class="col-span-3 text-xs text-slate-400 italic">No additional photos uploaded.</p>`;
+            }
+
+            let modal = document.getElementById('memberModal');
+            let panel = document.getElementById('memberModalPanel');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            panel.classList.remove('translate-x-full');
+            lucide.createIcons();
+        }
+
+        function closeMemberModal() {
+            let modal = document.getElementById('memberModal');
+            let panel = document.getElementById('memberModalPanel');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            panel.classList.add('translate-x-full');
+        }
+
+        function calcAge(birth, death) {
+            let b = parseInt(birth);
+            let d = death.toLowerCase() === 'present' ? 2026 : parseInt(death);
+            return isNaN(b) ? 'Lifetime' : `Aged ${d - b}`;
+        }
+
+        function deleteMember(id) {
+            familyData = familyData.filter(m => m.id !== id);
+            closeMemberModal();
+            renderTree();
+            renderTimeline();
+            showToast("Family member removed successfully.");
+        }
+
+        // Add Member Modal Controls
+        function openAddModal() {
+            let modal = document.getElementById('addModal');
+            let panel = document.getElementById('addModalPanel');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            panel.classList.remove('scale-95');
+        }
+
+        function closeAddModal() {
+            let modal = document.getElementById('addModal');
+            let panel = document.getElementById('addModalPanel');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            panel.classList.add('scale-95');
+            document.getElementById('addMemberForm').reset();
+        }
+
+        function handleAddNewMember(e) {
+            e.preventDefault();
+            let name = document.getElementById('addName').value;
+            let branch = document.getElementById('addBranch').value;
+            let gen = parseInt(document.getElementById('addGen').value);
+            let birth = document.getElementById('addBirth').value || 'Unknown';
+            let death = document.getElementById('addDeath').value || 'Present';
+            let relation = document.getElementById('addRelation').value || 'Family Member';
+            let avatar = document.getElementById('addAvatar').value || `https://placehold.co/100x100/16a34a/ffffff?text=${name.charAt(0)}`;
+            let bio = document.getElementById('addBio').value || 'Newly added family member profile.';
+            let tagsRaw = document.getElementById('addTags').value;
+            let tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()) : ['Family'];
+
+            let newMember = {
+                id: Date.now(),
+                name, branch, gen, birth, death, relation, avatar, bio, tags,
+                milestones: [{ year: birth, title: `Born in ${birth}` }],
+                photos: []
+            };
+
+            familyData.push(newMember);
+            closeAddModal();
+            renderTree();
+            renderTimeline();
+            showToast(`${name} added to the family tree successfully!`);
+        }
+
+        // AI Chat (KinBot) Modal Controls
+        function openChatModal() {
+            let modal = document.getElementById('chatModal');
+            let panel = document.getElementById('chatModalPanel');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            panel.classList.remove('scale-95');
+        }
+
+        function closeChatModal() {
+            let modal = document.getElementById('chatModal');
+            let panel = document.getElementById('chatModalPanel');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            panel.classList.add('scale-95');
+        }
+
+        function askKinBotQuick(question) {
+            document.getElementById('chatInput').value = question;
+            sendChatMessage();
+        }
+
+        function sendChatMessage() {
+            let input = document.getElementById('chatInput');
+            let text = input.value.trim();
+            if(!text) return;
+
+            appendChatMessage(text, 'user');
+            input.value = '';
+
+            // Simulate AI response logic
+            setTimeout(() => {
+                let response = generateAIResponse(text);
+                appendChatMessage(response, 'ai');
+            }, 600);
+        }
+
+        function appendChatMessage(text, sender) {
+            let container = document.getElementById('chatMessages');
+            let row = document.createElement('div');
+            
+            if(sender === 'user') {
+                row.className = "flex items-start justify-end space-x-3";
+                row.innerHTML = `
+                    <div class="bg-brand-600 text-white p-3.5 rounded-2xl shadow-xs text-sm max-w-[85%]">${text}</div>
+                    <div class="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs shrink-0 font-bold">You</div>
+                `;
+            } else {
+                row.className = "flex items-start space-x-3";
+                row.innerHTML = `
+                    <div class="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs shrink-0 font-bold">AI</div>
+                    <div class="bg-white p-3.5 rounded-2xl shadow-xs border border-slate-200 text-sm text-slate-700 max-w-[85%]">${text}</div>
+                `;
+            }
+            container.appendChild(row);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function generateAIResponse(query) {
+            let q = query.toLowerCase();
+            if(q.includes('patriarch') || q.includes('elders')) {
+                return "The patriarchs and elders of the family are Arthur Harrison (Gen 1, Harrison Branch, WWII Navy vet) and Margaret Sterling (Gen 1, Sterling Branch, Botanist).";
+            } else if(q.includes('clara') && q.includes('arthur')) {
+                return "Clara Harrison (Gen 3) is Arthur Harrison's granddaughter! Arthur is her grandfather.";
+            } else if(q.includes('generation') || q.includes('list')) {
+                return "There are 3 generations currently mapped: Generation 1 (Arthur & Margaret), Generation 2 (Robert & Elena), and Generation 3 (Marcus & Clara).";
+            } else {
+                return `Based on the Harrison & Sterling family archive, ${query} connects to our records across 3 generations and 2 branches. Feel free to explore their detailed bios in the Tree view!`;
+            }
+        }
+    </script>
+</body>
+</html>
