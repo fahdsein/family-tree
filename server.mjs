@@ -4,7 +4,7 @@ import { extname, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readFile } from "node:fs/promises";
 import { FamilyStore } from "./lib/store.mjs";
-import { addAudit, createParentLink, createPerson, createUnion, describeRelationship, GENDERS, LIFE_STATUSES, PARENT_TYPES, UNION_STATUSES, UNION_TYPES, clean } from "./lib/domain.mjs";
+import { addAudit, createParentLink, createPerson, createUnion, describeRelationship, scopedFamilyState, GENDERS, LIFE_STATUSES, PARENT_TYPES, UNION_STATUSES, UNION_TYPES, clean } from "./lib/domain.mjs";
 
 const port = Number(process.env.PORT || 3000);
 const production = process.env.NODE_ENV === "production";
@@ -86,15 +86,21 @@ function safeEqualText(actual, expected) {
 
 function authenticate(email, password) {
   const development = !production;
+  let viewers = [];
+  try { viewers = JSON.parse(process.env.VIEWER_ACCOUNTS_JSON || "[]"); }
+  catch { throw new Error("VIEWER_ACCOUNTS_JSON must be valid JSON"); }
+  if (development && !viewers.length) viewers = [{ email: "viewer@roots.local", password: "viewer-demo", name: "Hana Rahman", personId: "hana" }];
   const accounts = [
     { email: process.env.ADMIN_EMAIL || "admin@roots.local", password: process.env.ADMIN_PASSWORD || (development ? "admin-demo" : ""), role: "admin", name: "Tree Administrator" },
-    { email: process.env.EDITOR_EMAIL || "editor@roots.local", password: process.env.EDITOR_PASSWORD || (development ? "editor-demo" : ""), role: "editor", name: "Family Editor" }
+    { email: process.env.EDITOR_EMAIL || "editor@roots.local", password: process.env.EDITOR_PASSWORD || (development ? "editor-demo" : ""), role: "editor", name: "Family Editor" },
+    ...viewers.map((account) => ({ ...account, role: "viewer" }))
   ];
   return accounts.find((account) => account.password && account.email.toLowerCase() === String(email || "").toLowerCase() && safeEqualText(password, account.password)) || null;
 }
 
 function publicSnapshot(actor) {
   const state = store.snapshot();
+  if (actor?.role === "viewer") return scopedFamilyState(state, actor.personId, 2);
   if (actor) return state;
   const visibleIds = new Set(state.people.filter((p) => !p.archivedAt && p.privacy === "public").map((p) => p.id));
   return {
@@ -110,25 +116,28 @@ function publicSnapshot(actor) {
 async function api(request, response, url) {
   if (request.method === "GET" && url.pathname === "/api/bootstrap") {
     const actor = user(request);
+    const state = publicSnapshot(actor);
+    const relationshipLabels = actor?.personId ? Object.fromEntries(state.people.map((person) => [person.id, describeRelationship(state, person.id, actor.personId).label])) : {};
     return send(response, 200, {
-      currentUser: actor ? { email: actor.email, name: actor.name, role: actor.role } : null,
-      state: publicSnapshot(actor),
+      currentUser: actor ? { email: actor.email, name: actor.name, role: actor.role, personId: actor.personId || null } : null,
+      state,
+      relationshipLabels,
       options: { genders: GENDERS, lifeStatuses: LIFE_STATUSES, unionStatuses: UNION_STATUSES, unionTypes: UNION_TYPES, parentTypes: PARENT_TYPES },
-      developmentLoginHint: production ? null : { admin: "admin@roots.local / admin-demo", editor: "editor@roots.local / editor-demo" }
+      developmentLoginHint: production ? null : { admin: "admin@roots.local / admin-demo", editor: "editor@roots.local / editor-demo", viewer: "viewer@roots.local / viewer-demo" }
     });
   }
   if (request.method === "POST" && url.pathname === "/api/auth/login") {
     const input = await jsonBody(request);
     const account = authenticate(input.email, input.password);
     if (!account) return send(response, 401, { error: "Invalid email or password" });
-    const token = sign({ id: randomUUID(), email: account.email, name: account.name, role: account.role, exp: Date.now() + 8 * 60 * 60 * 1000 });
-    return send(response, 200, { user: { email: account.email, name: account.name, role: account.role } }, { "Set-Cookie": `roots_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=28800${production ? "; Secure" : ""}` });
+    const token = sign({ id: randomUUID(), email: account.email, name: account.name, role: account.role, personId: account.personId || null, exp: Date.now() + 8 * 60 * 60 * 1000 });
+    return send(response, 200, { user: { email: account.email, name: account.name, role: account.role, personId: account.personId || null } }, { "Set-Cookie": `roots_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=28800${production ? "; Secure" : ""}` });
   }
   if (request.method === "POST" && url.pathname === "/api/auth/logout") return send(response, 200, { ok: true }, { "Set-Cookie": "roots_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0" });
   if (request.method === "POST" && url.pathname === "/api/relationships/explain") {
-    requireRole(request, "viewer");
+    const actor = requireRole(request, "viewer");
     const input = await jsonBody(request);
-    return send(response, 200, describeRelationship(store.snapshot(), input.fromId, input.toId));
+    return send(response, 200, describeRelationship(publicSnapshot(actor), input.fromId, input.toId));
   }
   if (request.method === "POST" && url.pathname === "/api/people") {
     const actor = requireRole(request, "editor"); const input = await jsonBody(request);
@@ -137,10 +146,19 @@ async function api(request, response, url) {
   }
   const personMatch = url.pathname.match(/^\/api\/people\/([^/]+)$/);
   if (personMatch && request.method === "GET") {
-    requireRole(request, "viewer"); const id = decodeURIComponent(personMatch[1]);
-    const person = store.snapshot().people.find((item) => item.id === id && !item.archivedAt);
+    const actor = requireRole(request, "viewer"); const id = decodeURIComponent(personMatch[1]);
+    const person = publicSnapshot(actor).people.find((item) => item.id === id && !item.archivedAt);
     if (!person) return send(response, 404, { error: "Person not found" });
     return send(response, 200, { person });
+  }
+  const relationshipMatch = url.pathname.match(/^\/api\/people\/([^/]+)\/relationships$/);
+  if (relationshipMatch && request.method === "GET") {
+    const actor = requireRole(request, "viewer"); const id = decodeURIComponent(relationshipMatch[1]); const state = publicSnapshot(actor);
+    if (!state.people.some((person) => person.id === id)) return send(response, 404, { error: "Person not found" });
+    const relationships = state.people.filter((person) => person.id !== id).map((person) => ({ person, ...describeRelationship(state, person.id, id) }))
+      .filter((item) => /(brother|sister|sibling|grand|uncle|aunt|nephew|niece|cousin|in-law)/i.test(item.label))
+      .sort((a, b) => a.label.localeCompare(b.label) || a.person.displayName.localeCompare(b.person.displayName));
+    return send(response, 200, { relationships });
   }
   if (personMatch && request.method === "PATCH") {
     const actor = requireRole(request, "editor"); const input = await jsonBody(request); const id = decodeURIComponent(personMatch[1]);

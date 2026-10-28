@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createParentLink, createPerson, describeRelationship } from "../lib/domain.mjs";
+import { createParentLink, createPerson, describeRelationship, scopedFamilyState } from "../lib/domain.mjs";
 import { seedState } from "../lib/seed.mjs";
 
 test("stores multiple marriages and children under their correct union", () => {
@@ -24,6 +24,17 @@ test("calculates named sibling and grandparent relationships", () => {
   const state = seedState();
   assert.match(describeRelationship(state, "yusuf", "amina").label, /Brother/);
   assert.match(describeRelationship(state, "hassan", "farid").label, /Grandfather/);
+  assert.match(describeRelationship(state, "amina", "farid").label, /Aunt/);
+  assert.match(describeRelationship(state, "farid", "amina").label, /Nephew/);
+  assert.match(describeRelationship(state, "mariam", "farid").label, /1st cousin/);
+});
+
+test("scopes a viewer to grandparents and the nearby extended-family branch", () => {
+  const state = scopedFamilyState(seedState(), "hana", 2);
+  const visible = new Set(state.people.map((person) => person.id));
+  for (const id of ["hana", "leila", "kareem", "samira", "tariq", "maya", "sami", "idris"]) assert.ok(visible.has(id), `${id} should be visible`);
+  for (const id of ["omar", "noura", "hassan"]) assert.ok(!visible.has(id), `${id} is above the grandparent boundary`);
+  assert.match(describeRelationship(state, "sami", "hana").label, /Brother/);
 });
 
 test("rejects ancestry cycles", () => {

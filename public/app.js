@@ -37,6 +37,8 @@ function personById(id) { return model.state.people.find((person) => person.id =
 function label(value) { return String(value || "unknown").replaceAll("_", " "); }
 function canEdit() { return ["editor", "admin"].includes(model.currentUser?.role); }
 function isAdmin() { return model.currentUser?.role === "admin"; }
+function relationshipToViewer(id) { return model.currentUser?.personId ? model.relationshipLabels?.[id] : ""; }
+function shortRelationship(value) { return String(value || "").split(" · ")[0].replace(/ \([^)]*\)$/, ""); }
 
 async function request(path, options = {}) {
   const response = await fetch(path, {
@@ -88,7 +90,7 @@ function configureAccess() {
   $("#authButton").textContent = model.currentUser ? `Sign out · ${model.currentUser.role}` : "Sign in";
   $("#privacyNotice").classList.toggle("hidden", Boolean(model.currentUser));
   $("#loginHint").textContent = model.developmentLoginHint
-    ? `Demo admin: ${model.developmentLoginHint.admin}. Demo editor: ${model.developmentLoginHint.editor}.`
+    ? `Demo admin: ${model.developmentLoginHint.admin}. Demo editor: ${model.developmentLoginHint.editor}. Demo family viewer: ${model.developmentLoginHint.viewer}.`
     : "Use the credentials configured by your family administrator.";
 }
 
@@ -144,6 +146,8 @@ function renderTree() {
       card.append(photoAvatar(person));
       const detail = node("span", "person-card-copy");
       detail.append(node("strong", "", person.displayName), node("small", "", lifespan(person)), node("small", "branch", person.branch));
+      const viewerRelationship = relationshipToViewer(person.id);
+      if (viewerRelationship) detail.append(node("small", "relationship-badge", shortRelationship(viewerRelationship)));
       card.append(detail, node("i", `status-dot ${person.lifeStatus}`, ""));
       card.addEventListener("click", () => showPerson(person.id)); row.append(card);
     }
@@ -174,19 +178,19 @@ function buildFamilyGraph() {
   const groups = new Map();
   for (const person of people) { const level = levels.get(person.id) || 0; if (!groups.has(level)) groups.set(level, []); groups.get(level).push(person); }
   const maxColumns = Math.max(1, ...[...groups.values()].map((items) => items.length));
-  const width = Math.max(920, maxColumns * 210 + 100); const height = Math.max(300, groups.size * 165 + 90);
+  const width = Math.max(920, maxColumns * 210 + 100); const height = Math.max(300, groups.size * 180 + 90);
   const svg = svgElement("svg", { viewBox: `0 0 ${width} ${height}`, width, height, role: "img", "aria-label": `Family tree graph showing ${depth} generations` });
   const style = getComputedStyle(document.documentElement); const primary = style.getPropertyValue("--primary").trim() || "#124e3f"; const secondary = style.getPropertyValue("--secondary").trim() || "#c5a880"; const text = style.getPropertyValue("--text").trim() || "#13221e"; const background = style.getPropertyValue("--bg").trim() || "#eef3f1";
   svg.append(svgElement("rect", { width, height, fill: background }));
   const positions = new Map();
   for (const [level, members] of [...groups.entries()].sort((a, b) => a[0] - b[0])) {
     const sorted = members.sort((a, b) => a.displayName.localeCompare(b.displayName)); const rowWidth = sorted.length * 190; const start = (width - rowWidth) / 2;
-    sorted.forEach((person, index) => positions.set(person.id, { x: start + index * 190 + 15, y: 35 + level * 165 }));
+    sorted.forEach((person, index) => positions.set(person.id, { x: start + index * 190 + 15, y: 35 + level * 180 }));
   }
   const edges = svgElement("g", { fill: "none", "stroke-linecap": "round" });
   for (const link of activeLinks().filter((item) => visible.has(item.parentId) && visible.has(item.childId))) {
     const a = positions.get(link.parentId); const b = positions.get(link.childId); if (!a || !b) continue;
-    const middle = (a.y + 94 + b.y) / 2; edges.append(svgElement("path", { d: `M ${a.x + 75} ${a.y + 94} C ${a.x + 75} ${middle}, ${b.x + 75} ${middle}, ${b.x + 75} ${b.y}`, stroke: primary, "stroke-width": 2.2, opacity: .66 }));
+    const middle = (a.y + 110 + b.y) / 2; edges.append(svgElement("path", { d: `M ${a.x + 75} ${a.y + 110} C ${a.x + 75} ${middle}, ${b.x + 75} ${middle}, ${b.x + 75} ${b.y}`, stroke: primary, "stroke-width": 2.2, opacity: .66 }));
   }
   for (const union of activeUnions().filter((item) => item.partnerIds.every((id) => visible.has(id)))) {
     const a = positions.get(union.partnerIds[0]); const b = positions.get(union.partnerIds[1]); if (!a || !b) continue;
@@ -195,11 +199,13 @@ function buildFamilyGraph() {
   svg.append(edges);
   for (const person of people) {
     const position = positions.get(person.id); const group = svgElement("g", { class: "graph-person", tabindex: "0", role: "button", "aria-label": person.displayName });
-    group.append(svgElement("rect", { x: position.x, y: position.y, width: 150, height: 94, rx: 14, fill: "#ffffff", stroke: primary, "stroke-width": 1.5 }));
+    group.append(svgElement("rect", { x: position.x, y: position.y, width: 150, height: 110, rx: 14, fill: "#ffffff", stroke: primary, "stroke-width": 1.5 }));
     group.append(svgElement("circle", { cx: position.x + 26, cy: position.y + 28, r: 16, fill: primary }));
     const initials = svgElement("text", { x: position.x + 26, y: position.y + 33, "text-anchor": "middle", fill: "#ffffff", "font-family": "Inter, sans-serif", "font-size": 11, "font-weight": 700 }); initials.textContent = person.displayName.split(/\s+/).map((word) => word[0]).slice(0, 2).join(""); group.append(initials);
     const name = svgElement("text", { x: position.x + 14, y: position.y + 60, fill: text, "font-family": "Lora, serif", "font-size": 13, "font-weight": 600 }); name.textContent = person.displayName.length > 20 ? `${person.displayName.slice(0, 19)}…` : person.displayName; group.append(name);
     const years = svgElement("text", { x: position.x + 14, y: position.y + 79, fill: text, opacity: .68, "font-family": "Inter, sans-serif", "font-size": 10 }); years.textContent = lifespan(person); group.append(years);
+    const viewerRelationship = relationshipToViewer(person.id);
+    if (viewerRelationship) { const relation = svgElement("text", { x: position.x + 14, y: position.y + 98, fill: primary, "font-family": "Inter, sans-serif", "font-size": 9, "font-weight": 700 }); relation.textContent = shortRelationship(viewerRelationship).slice(0, 24); group.append(relation); }
     group.addEventListener("click", () => showPerson(person.id)); group.addEventListener("keydown", (event) => { if (["Enter", " "].includes(event.key)) showPerson(person.id); }); svg.append(group);
   }
   return svg;
@@ -247,10 +253,12 @@ function relationshipSection(title, values) {
   return section;
 }
 
-function showPerson(id) {
+async function showPerson(id) {
   const person = personById(id); if (!person) return;
   const root = $("#personDetail"); root.replaceChildren();
   const heading = node("div", "profile-heading"); heading.append(photoAvatar(person, true)); const headingCopy = node("div", ""); headingCopy.append(node("p", "eyebrow", person.branch), node("h2", "", person.displayName), node("p", "detail-lifespan", `${label(person.lifeStatus)} · ${lifespan(person)}`)); heading.append(headingCopy); root.append(heading);
+  const viewerRelationship = relationshipToViewer(person.id);
+  if (viewerRelationship) root.append(node("p", "profile-relationship", `Relationship to you: ${viewerRelationship}`));
   if (person.photo?.url && person.photo.caption) root.append(node("p", "photo-caption muted", person.photo.caption));
   const identity = [person.gender && person.gender !== "unknown" ? label(person.gender) : "", person.pronouns, ...(person.alternateNames || [])].filter(Boolean);
   if (identity.length) root.append(node("p", "muted", identity.join(" · ")));
@@ -268,6 +276,8 @@ function showPerson(id) {
   const parentItems = activeLinks().filter((link) => link.childId === id).map((link) => node("p", "relationship-item", `${personById(link.parentId)?.displayName || "Unknown"} · ${label(link.parentType)} parent`));
   const childItems = activeLinks().filter((link) => link.parentId === id).map((link) => node("p", "relationship-item", `${personById(link.childId)?.displayName || "Unknown"} · ${label(link.parentType)} child`));
   root.append(relationshipSection("Parents", parentItems), relationshipSection("Children", childItems));
+  const extendedSection = relationshipSection("Extended family", [node("p", "muted", "Loading documented relatives…")]);
+  root.append(extendedSection);
   if (canEdit()) {
     const controls = node("div", "detail-controls");
     const edit = node("button", "button primary", "Edit complete record"); edit.type = "button"; edit.addEventListener("click", () => openPersonEditor(person.id)); controls.append(edit);
@@ -283,6 +293,17 @@ function showPerson(id) {
     root.append(controls);
   }
   $("#personDialog").showModal();
+  if (model.currentUser) {
+    try {
+      const data = await request(`/api/people/${encodeURIComponent(id)}/relationships`);
+      const items = data.relationships.map((relationship) => {
+        const item = node("button", "relationship-item relationship-link"); item.type = "button";
+        item.append(node("strong", "", relationship.person.displayName), node("span", "", relationship.label));
+        item.addEventListener("click", () => showPerson(relationship.person.id)); return item;
+      });
+      extendedSection.replaceWith(relationshipSection("Extended family", items));
+    } catch (error) { extendedSection.replaceWith(relationshipSection("Extended family", [node("p", "muted", error.message)])); }
+  } else extendedSection.replaceWith(relationshipSection("Extended family", []));
 }
 
 function personPayload(values) {

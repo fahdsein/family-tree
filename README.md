@@ -20,6 +20,7 @@ The original single-file prototype remains at `roots_leaves_family_tree_web_app.
 - Family/private/public visibility controls
 - Complete and partial person updates; administrators may permanently delete people and relationship records and review the audit log
 - Named kinship inference for parents, children, siblings, grandparents, aunts/uncles, nieces/nephews, cousins, partners, and common in-law relationships
+- Person-linked family viewer accounts: each viewer sees their own parents and grandparents plus the nearby branch needed to identify siblings, aunts/uncles, cousins, nieces/nephews, partners, and in-laws
 - Shortest-path relationship graph between any two connected people
 - PostgreSQL persistence in production, with a JSON-file fallback for local development
 - Docker image, Compose stack, health/readiness endpoints, and NEO App deployment configuration
@@ -40,6 +41,7 @@ Open `http://localhost:3000`. In development, the seeded accounts are:
 
 - Administrator: `admin@roots.local` / `admin-demo`
 - Editor: `editor@roots.local` / `editor-demo`
+- Family viewer (linked to Hana): `viewer@roots.local` / `viewer-demo`
 
 These demo passwords are disabled when `NODE_ENV=production`.
 
@@ -83,9 +85,12 @@ Set all of the following as secrets or environment variables:
 | `SESSION_SECRET` | yes | Random value of at least 24 characters |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | yes | Administrator login |
 | `EDITOR_EMAIL` / `EDITOR_PASSWORD` | optional | Editor login |
+| `VIEWER_ACCOUNTS_JSON` | recommended | JSON array of viewer logins linked to a person ID, for example `[{"email":"hana@example.com","password":"...","name":"Hana","personId":"hana"}]` |
 | `TREE_NAME` | optional | Family archive title |
 
 Use unique high-entropy passwords. The built-in authentication is appropriate for a small private deployment; for a larger or public product, connect an external identity provider, add account recovery and MFA, and move media to private object storage with signed URLs.
+
+Viewer access is enforced by the server, not only hidden in the interface. A viewer receives their own record, ancestors up to two levels, and nearby descendants/partners from those grandparent branches so useful extended-family terms can be displayed. Records above the grandparent boundary are excluded from bootstrap, profile, and relationship-explorer API responses. Administrators and editors retain full-tree access.
 
 ## NEO App deployment
 
