@@ -273,9 +273,18 @@ async function showPerson(id) {
     return item;
   });
   root.append(relationshipSection("Marriage & partnership history", unionItems));
-  const parentItems = activeLinks().filter((link) => link.childId === id).map((link) => node("p", "relationship-item", `${personById(link.parentId)?.displayName || "Unknown"} · ${label(link.parentType)} parent`));
+  const parentLinks = activeLinks().filter((link) => link.childId === id);
+  const biologicalParents = parentLinks.filter((link) => link.parentType === "biological").map((link) => personById(link.parentId)).filter(Boolean);
+  const biologicalItems = [
+    ["Biological father", biologicalParents.find((parent) => parent.gender === "male")],
+    ["Biological mother", biologicalParents.find((parent) => parent.gender === "female")]
+  ].map(([role, parent]) => node("p", `relationship-item${parent ? "" : " missing-relation"}`, `${role}: ${parent?.displayName || "Not documented"}`));
+  for (const parent of biologicalParents.filter((item) => !["male", "female"].includes(item.gender))) biologicalItems.push(node("p", "relationship-item", `Biological parent: ${parent.displayName}`));
+  const otherParentItems = parentLinks.filter((link) => link.parentType !== "biological").map((link) => node("p", "relationship-item", `${personById(link.parentId)?.displayName || "Unknown"} · ${label(link.parentType)} parent`));
   const childItems = activeLinks().filter((link) => link.parentId === id).map((link) => node("p", "relationship-item", `${personById(link.childId)?.displayName || "Unknown"} · ${label(link.parentType)} child`));
-  root.append(relationshipSection("Parents", parentItems), relationshipSection("Children", childItems));
+  root.append(relationshipSection("Biological parents", biologicalItems));
+  if (otherParentItems.length) root.append(relationshipSection("Other parents & guardians", otherParentItems));
+  root.append(relationshipSection("Children", childItems));
   const extendedSection = relationshipSection("Extended family", [node("p", "muted", "Loading documented relatives…")]);
   root.append(extendedSection);
   if (canEdit()) {
@@ -368,11 +377,16 @@ function renderRelationshipRecords() {
     for (const record of records) {
       const row = node("div", "record-row");
       const copy = node("p", ""); copy.append(node("strong", "", record.title), node("small", "", record.detail)); row.append(copy);
+      const actions = node("div", "record-actions");
+      if (canEdit()) {
+        const edit = node("button", "button secondary", "Edit"); edit.type = "button"; edit.addEventListener("click", record.edit); actions.append(edit);
+      }
       if (isAdmin()) {
         const remove = node("button", "button danger", "Delete"); remove.type = "button";
         remove.addEventListener("click", async () => { if (!confirm(`Permanently delete ${record.title}? This cannot be undone.`)) return; try { await request(record.path, { method: "DELETE" }); await reload(); toast("Relationship permanently deleted"); } catch (error) { toast(error.message, true); } });
-        row.append(remove);
+        actions.append(remove);
       }
+      if (actions.children.length) row.append(actions);
       section.append(row);
     }
     if (!records.length) section.append(node("p", "muted", "No active records.")); root.append(section);
@@ -380,18 +394,54 @@ function renderRelationshipRecords() {
   addGroup("Marriages and partnerships", activeUnions().map((union) => ({
     title: union.partnerIds.map((id) => personById(id)?.displayName || "Unknown").join(" + "),
     detail: `${label(union.type)} · ${label(union.status)} · ${formatDate(union.start)} – ${union.end?.value || "present"}`,
-    path: `/api/unions/${encodeURIComponent(union.id)}`
+    path: `/api/unions/${encodeURIComponent(union.id)}`,
+    edit: () => openUnionEditor(union.id)
   })));
   addGroup("Parent and child links", activeLinks().map((link) => ({
     title: `${personById(link.parentId)?.displayName || "Unknown"} → ${personById(link.childId)?.displayName || "Unknown"}`,
     detail: `${label(link.parentType)} · ${label(link.confidence)}`,
-    path: `/api/parent-links/${encodeURIComponent(link.id)}`
+    path: `/api/parent-links/${encodeURIComponent(link.id)}`,
+    edit: () => openParentEditor(link.id)
   })));
+}
+
+function renderPersonRecords() {
+  const root = $("#personRecords"); root.replaceChildren(node("h3", "", "Existing people"));
+  const list = node("section", "record-group");
+  for (const person of activePeople().sort((a, b) => a.displayName.localeCompare(b.displayName))) {
+    const row = node("div", "record-row"); const copy = node("p", "");
+    copy.append(node("strong", "", person.displayName), node("small", "", `${label(person.lifeStatus)} · ${person.branch} · ${lifespan(person)}`));
+    const edit = node("button", "button secondary", "Edit person"); edit.type = "button"; edit.addEventListener("click", () => openPersonEditor(person.id));
+    row.append(copy, edit); list.append(row);
+  }
+  root.append(list);
+}
+
+function resetUnionForm() {
+  const form = $("#unionForm"); form.reset(); setField(form, "id", "");
+  $("#unionFormTitle").textContent = "Connect a marriage or partnership"; $("#unionSubmit").textContent = "Create relationship"; $("#cancelUnionEdit").classList.add("hidden"); renderForms();
+}
+
+function openUnionEditor(id) {
+  const union = activeUnions().find((item) => item.id === id); if (!union) return; const form = $("#unionForm");
+  setField(form, "id", union.id); setField(form, "partnerA", union.partnerIds[0]); setField(form, "partnerB", union.partnerIds[1]); setField(form, "type", union.type); setField(form, "status", union.status); setField(form, "start", union.start?.value); setField(form, "end", union.end?.value); setField(form, "place", union.place); setField(form, "endReason", union.endReason); setField(form, "sourceNote", union.sourceNote);
+  $("#unionFormTitle").textContent = "Edit marriage or partnership"; $("#unionSubmit").textContent = "Save relationship"; $("#cancelUnionEdit").classList.remove("hidden"); form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function resetParentForm() {
+  const form = $("#parentForm"); form.reset(); setField(form, "id", "");
+  $("#parentFormTitle").textContent = "Connect parent and child"; $("#parentSubmit").textContent = "Connect parent and child"; $("#cancelParentEdit").classList.add("hidden"); renderForms();
+}
+
+function openParentEditor(id) {
+  const link = activeLinks().find((item) => item.id === id); if (!link) return; const form = $("#parentForm");
+  setField(form, "id", link.id); setField(form, "parentId", link.parentId); setField(form, "childId", link.childId); setField(form, "parentType", link.parentType); setField(form, "unionId", link.unionId); setField(form, "confidence", link.confidence); setField(form, "privacy", link.privacy); setField(form, "sourceNote", link.sourceNote);
+  $("#parentFormTitle").textContent = "Edit parent-child relationship"; $("#parentSubmit").textContent = "Save parent-child relationship"; $("#cancelParentEdit").classList.remove("hidden"); form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function render() {
   $("#treeName").textContent = model.state.workspace?.name || "Family archive";
-  configureAccess(); renderStats(); renderTree(); renderGraph(); renderStories(); renderForms(); renderRelationshipRecords(); renderAudit();
+  configureAccess(); renderStats(); renderTree(); renderGraph(); renderStories(); renderForms(); renderPersonRecords(); renderRelationshipRecords(); renderAudit();
 }
 
 function switchView(name) {
@@ -430,8 +480,10 @@ function bind() {
   });
   $("#personForm").addEventListener("submit", async (event) => { event.preventDefault(); const form = event.currentTarget; const values = formData(form); try { await request("/api/people", { method: "POST", body: JSON.stringify(personPayload(values)) }); form.reset(); await reload(); toast("Person added"); } catch (error) { toast(error.message, true); } });
   $("#editPersonForm").addEventListener("submit", async (event) => { event.preventDefault(); const form = event.currentTarget; const values = formData(form); try { await request(`/api/people/${encodeURIComponent(values.id)}`, { method: "PATCH", body: JSON.stringify(personPayload(values)) }); $("#editPersonDialog").close(); await reload(); toast("Complete person record updated"); } catch (error) { toast(error.message, true); } });
-  $("#unionForm").addEventListener("submit", async (event) => { event.preventDefault(); const form = event.currentTarget; const values = formData(form); try { await request("/api/unions", { method: "POST", body: JSON.stringify({ partnerIds: [values.partnerA, values.partnerB], type: values.type, status: values.status, start: { value: values.start }, end: { value: values.end }, place: values.place, endReason: values.endReason, sourceNote: values.sourceNote }) }); form.reset(); await reload(); toast("Partnership created"); } catch (error) { toast(error.message, true); } });
-  $("#parentForm").addEventListener("submit", async (event) => { event.preventDefault(); const form = event.currentTarget; const values = formData(form); try { await request("/api/parent-links", { method: "POST", body: JSON.stringify(values) }); form.reset(); await reload(); toast("Parent and child connected"); } catch (error) { toast(error.message, true); } });
+  $("#unionForm").addEventListener("submit", async (event) => { event.preventDefault(); const values = formData(event.currentTarget); const editing = Boolean(values.id); try { await request(editing ? `/api/unions/${encodeURIComponent(values.id)}` : "/api/unions", { method: editing ? "PATCH" : "POST", body: JSON.stringify({ partnerIds: [values.partnerA, values.partnerB], type: values.type, status: values.status, start: { value: values.start }, end: { value: values.end }, place: values.place, endReason: values.endReason, sourceNote: values.sourceNote }) }); resetUnionForm(); await reload(); toast(editing ? "Marriage or partnership updated" : "Partnership created"); } catch (error) { toast(error.message, true); } });
+  $("#parentForm").addEventListener("submit", async (event) => { event.preventDefault(); const values = formData(event.currentTarget); const editing = Boolean(values.id); try { await request(editing ? `/api/parent-links/${encodeURIComponent(values.id)}` : "/api/parent-links", { method: editing ? "PATCH" : "POST", body: JSON.stringify(values) }); resetParentForm(); await reload(); toast(editing ? "Parent-child relationship updated" : "Parent and child connected"); } catch (error) { toast(error.message, true); } });
+  $("#cancelUnionEdit").addEventListener("click", resetUnionForm);
+  $("#cancelParentEdit").addEventListener("click", resetParentForm);
 }
 
 bind();

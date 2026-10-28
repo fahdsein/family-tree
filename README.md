@@ -18,7 +18,9 @@ The original single-file prototype remains at `roots_leaves_family_tree_web_app.
 - Relationship calculation that can report both a marriage and a shared ancestor
 - Life statuses: living, deceased, presumed deceased, or unknown
 - Family/private/public visibility controls
-- Complete and partial person updates; administrators may permanently delete people and relationship records and review the audit log
+- Complete and partial person updates from either a profile or the Manage page; administrators may permanently delete people and relationship records and review the audit log
+- Editors and administrators can edit marriage/partnership and parent-child records, including partners, dates, status, parent type, associated union, confidence, privacy, and evidence notes
+- Person profiles explicitly identify documented biological father and biological mother, while preserving separate adoptive, step, foster, guardian, donor, and surrogate relationships
 - Named kinship inference for parents, children, siblings, grandparents, aunts/uncles, nieces/nephews, cousins, partners, and common in-law relationships
 - Person-linked family viewer accounts: each viewer sees their own parents and grandparents plus the nearby branch needed to identify siblings, aunts/uncles, cousins, nieces/nephews, partners, and in-laws
 - Shortest-path relationship graph between any two connected people
@@ -112,8 +114,8 @@ No worker, queue, cron job, or object-storage component is required for the curr
 - `POST /api/auth/login` and `POST /api/auth/logout`
 - `POST /api/relationships/explain`
 - `GET/POST/PATCH/DELETE /api/people`
-- `POST/DELETE /api/unions`
-- `POST/DELETE /api/parent-links`
+- `POST/PATCH/DELETE /api/unions`
+- `POST/PATCH/DELETE /api/parent-links`
 
 ## Current scope and next recommended milestones
 

@@ -186,6 +186,16 @@ async function api(request, response, url) {
     return send(response, 201, { union });
   }
   const unionMatch = url.pathname.match(/^\/api\/unions\/([^/]+)$/);
+  if (unionMatch && request.method === "PATCH") {
+    const actor = requireRole(request, "editor"); const input = await jsonBody(request); const id = decodeURIComponent(unionMatch[1]);
+    const updated = await store.mutate((state) => {
+      const index = state.unions.findIndex((item) => item.id === id && !item.archivedAt); if (index < 0) throw Object.assign(new Error("Union not found"), { status: 404 });
+      const current = state.unions[index];
+      const next = createUnion(state, { ...current, ...input, start: { ...current.start, ...(input.start || {}) }, end: { ...current.end, ...(input.end || {}) }, id, createdAt: current.createdAt });
+      state.unions[index] = next; addAudit(state, actor, "update", "union", id, `Updated ${next.type} relationship`); return next;
+    });
+    return send(response, 200, { union: updated });
+  }
   if (unionMatch && request.method === "DELETE") {
     const actor = requireRole(request, "admin"); const id = decodeURIComponent(unionMatch[1]);
     await store.mutate((state) => {
@@ -200,6 +210,15 @@ async function api(request, response, url) {
     return send(response, 201, { link });
   }
   const linkMatch = url.pathname.match(/^\/api\/parent-links\/([^/]+)$/);
+  if (linkMatch && request.method === "PATCH") {
+    const actor = requireRole(request, "editor"); const input = await jsonBody(request); const id = decodeURIComponent(linkMatch[1]);
+    const updated = await store.mutate((state) => {
+      const index = state.parentLinks.findIndex((item) => item.id === id && !item.archivedAt); if (index < 0) throw Object.assign(new Error("Parent link not found"), { status: 404 });
+      const current = state.parentLinks[index]; const next = createParentLink(state, { ...current, ...input, id, createdAt: current.createdAt });
+      state.parentLinks[index] = next; addAudit(state, actor, "update", "parent_link", id, "Updated parent-child relationship"); return next;
+    });
+    return send(response, 200, { link: updated });
+  }
   if (linkMatch && request.method === "DELETE") {
     const actor = requireRole(request, "admin"); const id = decodeURIComponent(linkMatch[1]);
     await store.mutate((state) => {

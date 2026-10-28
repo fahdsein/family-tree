@@ -85,23 +85,24 @@
         </form>
 
         <form id="unionForm" class="card form-card">
-          <h3>Connect a marriage or partnership</h3>
+          <input name="id" type="hidden"><h3 id="unionFormTitle">Connect a marriage or partnership</h3>
           <div class="two-column"><label>Partner A<select name="partnerA" required></select></label><label>Partner B<select name="partnerB" required></select></label></div>
           <div class="two-column"><label>Type<select name="type"></select></label><label>Status<select name="status"></select></label></div>
           <div class="two-column"><label>Started<input name="start" maxlength="30" placeholder="2017-08"></label><label>Ended<input name="end" maxlength="30"></label></div>
           <div class="two-column"><label>Place<input name="place" maxlength="140"></label><label>End reason<input name="endReason" maxlength="100"></label></div>
           <label>Source or evidence note<textarea name="sourceNote" rows="2" maxlength="500"></textarea></label>
-          <button class="button primary" type="submit">Create relationship</button>
+          <div class="form-actions"><button id="unionSubmit" class="button primary" type="submit">Create relationship</button><button id="cancelUnionEdit" class="button secondary hidden" type="button">Cancel edit</button></div>
         </form>
 
         <form id="parentForm" class="card form-card">
-          <h3>Connect parent and child</h3>
+          <input name="id" type="hidden"><h3 id="parentFormTitle">Connect parent and child</h3>
           <div class="two-column"><label>Parent<select name="parentId" required></select></label><label>Child<select name="childId" required></select></label></div>
           <div class="two-column"><label>Parent type<select name="parentType"></select></label><label>Associated union<select name="unionId"><option value="">None / unknown</option></select></label></div>
           <div class="two-column"><label>Confidence<select name="confidence"><option>confirmed</option><option>likely</option><option>uncertain</option><option>disputed</option></select></label><label>Privacy<select name="privacy"><option>family</option><option>private</option><option>public</option></select></label></div>
           <label>Source or evidence note<textarea name="sourceNote" rows="2" maxlength="500"></textarea></label>
-          <button class="button primary" type="submit">Connect parent and child</button>
+          <div class="form-actions"><button id="parentSubmit" class="button primary" type="submit">Connect parent and child</button><button id="cancelParentEdit" class="button secondary hidden" type="button">Cancel edit</button></div>
         </form>
+        <section id="personRecords" class="card form-card relationship-records"></section>
         <section id="relationshipRecords" class="card form-card relationship-records"></section>
       </div>
     </section>

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createParentLink, createPerson, describeRelationship, scopedFamilyState } from "../lib/domain.mjs";
+import { createParentLink, createPerson, createUnion, describeRelationship, scopedFamilyState } from "../lib/domain.mjs";
 import { seedState } from "../lib/seed.mjs";
 
 test("stores multiple marriages and children under their correct union", () => {
@@ -51,4 +51,16 @@ test("stores an optional secure profile photo", () => {
   const person = createPerson({ displayName: "Example", photo: { url: "https://images.example.test/person.jpg", caption: "Portrait" } });
   assert.equal(person.photo.caption, "Portrait");
   assert.match(person.photo.url, /^https:/);
+});
+
+test("permits an existing marriage and parent link to be rebuilt for editing", () => {
+  const state = seedState();
+  const union = state.unions.find((item) => item.id === "union-leila-kareem");
+  const updatedUnion = createUnion(state, { ...union, status: "separated", notes: "Updated record" });
+  assert.equal(updatedUnion.id, union.id);
+  assert.equal(updatedUnion.status, "separated");
+  const link = state.parentLinks.find((item) => item.id === "parent-leila-hana");
+  const updatedLink = createParentLink(state, { ...link, confidence: "likely" });
+  assert.equal(updatedLink.id, link.id);
+  assert.equal(updatedLink.confidence, "likely");
 });
